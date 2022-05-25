@@ -74,6 +74,7 @@ def var_list(ast):
 
 nb_while = 0
 nb_if = 0
+nb_de = 0
 
 
 def compile_expr(expr):
@@ -90,7 +91,8 @@ def compile_expr(expr):
         if op == "!=":
             return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
         if op == "==":
-            return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx\ncmp rax,0\nje finrax\nmov rax 1\njmp finrax\nfin:mov rax, 0\n"
+            nb_de += 1
+            return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx\ncmp rax,0\nje fin_de{nb_de}\nmov rax 0\njmp fin_de{nb_de}_2\nfin_de{nb_de}:mov rax, 1\nfin_de{nb_de}_2:\n"
 
     if expr.data == "parenexpr":
         return compile_expr(expr.children[0])
