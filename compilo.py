@@ -1,5 +1,4 @@
 import lark
-
 import argparse
 
 
@@ -24,11 +23,42 @@ grammaire = lark.Lark(
 )
 
 
+def operation(op, nb1, nb2):
+    if op == "+":
+        return nb1 + nb2
+    elif op == "-":
+        return nb1 - nb2
+    elif op == "*":
+        return nb1 * nb2
+    elif op == "==":
+        if nb1 == nb2:
+            return 1
+        else:
+            return 0
+    elif op == "!=":
+        if nb1 == nb2:
+            return 0
+        else:
+            return 1
+    else:
+        raise Exception("Not Implemented")
+
+
 def pp_expr(expr):
     if expr.data == "binexpr":
+        # print(expr)
+        op = expr.children[1].value
+        if (
+            expr.children[0].data == "nombre"
+            and expr.children[2].data == "nombre"
+        ):
+            e1 = int(expr.children[0].children[0].value)
+            e2 = int(expr.children[2].children[0].value)
+            return f"{operation(op,e1,e2)}"
+
         e1 = pp_expr(expr.children[0])
         e2 = pp_expr(expr.children[2])
-        op = expr.children[1].value
+
         return f"({e1} {op} {e2})"
     elif expr.data == "parenexpr":
         return f"({pp_expr(expr.children[0])})"
@@ -88,9 +118,16 @@ nb_if = 0
 
 def compile_expr(expr):
     if expr.data == "binexpr":
+        op = expr.children[1].value
+        if (
+            expr.children[0].data == "nombre"
+            and expr.children[2].data == "nombre"
+        ):
+            e1 = int(expr.children[0].children[0].value)
+            e2 = int(expr.children[2].children[0].value)
+            return f"\nmov rax, {operation(op,e1,e2)}"
         e1 = compile_expr(expr.children[0])
         e2 = compile_expr(expr.children[2])
-        op = expr.children[1].value
         if op == "+":
             return f"{e2}\npush rax\n{e1}\npop rbx\nadd rax,rbx"
         if op == "-":
@@ -170,6 +207,13 @@ def compile(prg):
 # print(compile_prg(grammaire.parse(program)))
 
 program = "".join(open(args.file).readlines())
+# program = """main(X,Y){
+
+#     U=4+3;
+#     printf(Y-X);
+#     printf(3+8);
+#     return(U+X);
+#     }"""
 
 print(pp_prg(grammaire.parse(program)))
 print("\n")
