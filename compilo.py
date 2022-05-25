@@ -215,7 +215,7 @@ program = "".join(open(args.file).readlines())
 #     return(U+X);
 #     }"""
 
-print(compile(grammaire.parse(program)))
+print(pp_prg(grammaire.parse(program)))
 print("\n")
 with open("prog.asm", "w") as f:
     f.write(compile(grammaire.parse(program)))
