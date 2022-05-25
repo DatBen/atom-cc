@@ -10,8 +10,9 @@ args = parser.parse_args()
 
 grammaire = lark.Lark(
     """ variables: IDENTIFIANT ("," IDENTIFIANT)*
-    expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr
+    expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr | FLOAT"f" -> float
     NUMBER : /[0-9]+/
+    FLOAT : /[0-9]+\.[0-9]+/
     cmd : IDENTIFIANT "=" expr ";" -> assignement | "while" "("expr")" "{" bloc "}" -> while | "if" "("expr")" "{" bloc "}" -> if | "printf" "("expr")" ";" -> printf
     bloc : (cmd)*
     prog: "main" "(" variables ")" "{" bloc "return" "(" expr ")" ";" "}"
@@ -32,6 +33,9 @@ def pp_expr(expr):
         return f"({pp_expr(expr.children[0])})"
     elif expr.data in {"variable", "nombre"}:
         return expr.children[0].value
+    elif expr.data == "float":
+        return expr.children[0].value+"f"
+    
 
     else:
         return expr.data  # not implemented
@@ -78,6 +82,17 @@ def var_list(ast):
         s.update(var_list(c))
     return s
 
+def float_list(ast):
+    if isinstance(ast, lark.Token):
+        if ast.type == "FLOAT":
+            return {ast.value}
+        else:
+            return set()
+    s = set()
+    for c in ast.children:
+        s.update(float_list(c))
+    return s
+
 
 
 
@@ -97,8 +112,6 @@ def compile_expr(expr):
             return f"{e2}\npush rax\n{e1}\npop rbx\nmul rax,rbx"
         if op=="!=":
             return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
-        if op=="==":
-            return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
     if expr.data == "parenexpr":
         return compile_expr(expr.children[0])
     if expr.data =="variable":
@@ -107,6 +120,9 @@ def compile_expr(expr):
     if expr.data == "nombre":
         e=expr.children[0].value
         return f"\nmov rax,{e}"
+    if expr.data == "float":
+        e=expr.children[0].value
+        return f"\nmovsd xmm0,[{float_dict[e]}]"
         
 def compile_cmd(cmd):
     global nb_while
@@ -114,9 +130,18 @@ def compile_cmd(cmd):
     if cmd.data == "assignement":
         lhs = cmd.children[0].value
         rhs = compile_expr(cmd.children[1])
-        return f"{rhs}\nmov [{lhs}],rax"
+        if "xmm0" in rhs:
+            print("ok")
+            return f"{rhs}\nmovsd [{lhs}],xmm0"
+        else:
+            return f"{rhs}\nmov [{lhs}],rax"
     if cmd.data == "printf":
-        return f"{compile_expr(cmd.children[0])}\nmov rdi,fmt\nmov rsi,rax\nxor rax,rax\ncall printf"
+        rhs=compile_expr(cmd.children[0])
+        if "xmm0" in rhs:
+            return f"{rhs}\nmov rdi,fmt_float\nmov rsi,rax\nxor rax,rax\ncall printf"
+        else:
+            return f"{rhs}\nmov rdi,fmt\nmov rsi,rax\nxor rax,rax\ncall printf"
+
     if cmd.data == "if":
         nb_if+=1
         e = compile_expr(cmd.children[0])
@@ -147,11 +172,17 @@ def compile_vars(ast):
     return s
 
 
+
+
+
+
 def compile(prg):
     with open("moule.asm") as f:
         code = f.read()
         vars_decl="\n".join([f"{x}: dq 0" for x in var_list(prg)])
+        float_decl="\n".join([f"{float_dict[key]}: dq {key}" for key in float_dict])
         prog=compile_prg(prg)
+        code=code.replace("FLOAT_DECL",float_decl)
         code=code.replace("VAR_DECL",vars_decl)
         code=code.replace("RETURN",compile_expr(prg.children[2]))
         code=code.replace("BODY",prog)
@@ -161,8 +192,18 @@ def compile(prg):
 # print(compile_prg(grammaire.parse(program)))
 
 program="".join(open(args.file).readlines())
+program=grammaire.parse(program)
 
-print(pp_prg(grammaire.parse(program)))
+float_dict={}
+i=0
+for f in float_list(program):
+    float_dict[f]="LC"+str(i)
+    i+=1
+
+
+
+
+print(pp_prg(program))
 print("\n")
 with open("prog.asm","w") as f:
-    f.write(compile(grammaire.parse(program)))
+    f.write(compile(program))

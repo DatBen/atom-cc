@@ -2,7 +2,13 @@ extern printf, atoi
 global main
 section .data
 fmt: db "%d", 10, 0
+fmt_float: db "%lf", 10, 0
+
+b: dq 0
+c: dq 0
 a: dq 0
+LC0: dq 2.0
+LC1: dq 10.0
 
 section .text
 main:
@@ -19,6 +25,15 @@ mov [a],rax
 
 mov rax,10
 mov [a],rax
+movsd xmm0,[LC1]
+movsd [b],xmm0
+movsd xmm0,[LC0]
+movsd [c],xmm0
+mov rax,[b]
+mov rdi,fmt
+movsd rsi,rax
+xor rax,rax
+call printf
 deb_while1:
 
 mov rax,8
@@ -39,7 +54,7 @@ sub rax,rbx
 mov [a],rax
 mov rax,[a]
 mov rdi,fmt
-mov rsi,rax
+movsd rsi,rax
 xor rax,rax
 call printf
 jmp deb_while1

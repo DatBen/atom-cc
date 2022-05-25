@@ -1,6 +1,9 @@
 main(a)
 {
     a = 10;
+    b = 10.0f;
+    c = 2.0f;
+    printf(b);
     while (a != 8)
     {
         a = a - 1;
