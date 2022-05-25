@@ -1,0 +1,21 @@
+nasm -f elf64 test.asm  // .asm => .o
+gcc -no-pie -fno-pie  .o
+
+
+rax > eax > ax > al
+ax = ah al
+
+rsp = haut de la pile
+rbp = position dans la pile fixe lors de l'appel d'une fonction
+
+évaluer une expression <=> rax prend la valeur de l'expression  
+
+n; <=> rax = n <=> mov rax, n
+X; <=> rax = [X] <=> mov rax, [X]
+
+pour évaluer une opération, on évalue chacune des expressions puis on les push dans la pile 
+et on fait l'opération en dépilant au fur et à mesure
+
+
+
+    
