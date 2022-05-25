@@ -189,7 +189,8 @@ def compile_prg(prog):
 def compile_vars(ast):
     s = ""
     for i in range(len(ast.children)):
-        s += f"\nmov rbx, [rbp-0x10]\nmov rdi,[rbx-{8*(i)}]\ncall atoi\nmov [{ast.children[i].value}],rax"
+        s += f"\nmov rbx, [rbp-0x10]\nmov rdi, [rbx+{8*(i+1)}]\ncall atoi\n\
+mov [{ast.children[i].value}], rax\n"
     return s
 
 
