@@ -13,12 +13,11 @@ push rsi
 
 
 mov rbx, [rbp-0x10]
-mov rdi,[rbx-0]
+mov rdi, [rbx+8]
 call atoi
-mov [a],rax
+mov [a], rax
 
-mov rax,10
-mov [a],rax
+
 deb_while1:
 
 mov rax,8
