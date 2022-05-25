@@ -11,7 +11,7 @@ grammaire = lark.Lark(
     IDENTIFIANT : /[a-zA-Z][a-zA-Z0-9]*/
     %import common.WS
     %ignore WS
-     """, start="cmd")
+     """, start="prog")
 
 
 def pp_expr(expr):
@@ -115,7 +115,7 @@ def compile_expr(expr):
         return f"\nmov rax,{e}"
     if expr.data == "new_array":
         e = compile_expr(expr.children[0])
-        res = f"mov rdi, {8*int(e+1)}\ncall malloc\nmov [rax], {int(e)}\n"
+        res = f"mov rdi, {str(8*int(e)+8)}\ncall malloc\npush rax\n{e}\npop rbx\nmov [rbx], rax\n"
         return res
     if expr.data == "len_array":
         e = expr.children[0].value
@@ -189,10 +189,10 @@ def compile(prg):
 # print(compile_prg(grammaire.parse(program)))
 
 
-program = "a=len(t);"
+program = "main(a){a=new int[10];return (a);}"
 g = grammaire.parse(program)
 print(g)
-print(pp_cmd(g))
+print(compile(g))
 # print(pp_prg(grammaire.parse(program)))
 # print("\n")
 # with open("prog.asm", "w") as f:
