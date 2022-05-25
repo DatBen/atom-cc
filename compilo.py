@@ -2,7 +2,7 @@ import lark
 
 grammaire = lark.Lark(
     """ variables: IDENTIFIANT ("," IDENTIFIANT)*
-    expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr | "new" IDENTIFIANT "[" expr "]" -> new_array | IDENTIFIANT "[" expr "]" -> array_access
+    expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr | "new"  "int" "[" expr "]" -> new_array | IDENTIFIANT "[" expr "]" -> array_access
     NUMBER : /[0-9]+/
     cmd : IDENTIFIANT "=" expr ";" -> assignement | IDENTIFIANT "[" expr "]" "=" expr ";" -> array_assignement | "while" "("expr")" "{" bloc "}" -> while | "if" "("expr")" "{" bloc "}" -> if | "printf" "("expr")" ";" -> printf
     bloc : (cmd)*
@@ -11,7 +11,7 @@ grammaire = lark.Lark(
     IDENTIFIANT : /[a-zA-Z][a-zA-Z0-9]*/
     %import common.WS
     %ignore WS
-     """, start="prog")
+     """, start="cmd")
 
 
 def pp_expr(expr):
@@ -24,7 +24,10 @@ def pp_expr(expr):
         return f"({pp_expr(expr.children[0])})"
     elif expr.data in {"variable", "nombre"}:
         return expr.children[0].value
-
+    elif expr.data == "array_access":
+        return f"{expr.children[0].value}[{pp_expr(expr.children[1])}]"
+    elif expr.data == "new_array":
+        return f"new int[{pp_expr(expr.children[0])}]"
     else:
         return expr.data  # not implemented
 
@@ -33,6 +36,10 @@ def pp_cmd(cmd):
     if cmd.data == "assignement":
         lhs = cmd.children[0].value
         rhs = pp_expr(cmd.children[1])
+        return f"{lhs} = {rhs};"
+    elif cmd.data == "array_assignement":
+        lhs = cmd.children[0].value+"["+pp_expr(cmd.children[1])+"]"
+        rhs = pp_expr(cmd.children[2])
         return f"{lhs} = {rhs};"
     elif cmd.data == "printf":
         return f"printf({pp_expr(cmd.children[0])});"
@@ -161,8 +168,11 @@ def compile(prg):
 # print(compile_prg(grammaire.parse(program)))
 
 
-program = "main(a){a=10;while(a==8){a=a-1;printf(a);}return(a);}"
-print(pp_prg(grammaire.parse(program)))
-print("\n")
-with open("prog.asm", "w") as f:
-    f.write(compile(grammaire.parse(program)))
+program = "a[7]=4;"
+g = grammaire.parse(program)
+print(g)
+print(pp_cmd(g))
+# print(pp_prg(grammaire.parse(program)))
+# print("\n")
+# with open("prog.asm", "w") as f:
+#     f.write(compile(grammaire.parse(program)))
