@@ -147,6 +147,11 @@ def compile_cmd(cmd):
         e = compile_expr(cmd.children[0])
         b = compile_bloc(cmd.children[1])
         return f"\ndeb_while{nb_while}:\n{e}\ncmp rax,0\njz end_while{nb_while}\n{b}\njmp deb_while{nb_while}\nend_while{nb_while}:"
+    if cmd.data == "array_assignement":
+        lhs = cmd.children[0].value
+        e = str((int(compile_expr(cmd.children[1]))+1)*8)
+        rhs = compile_expr(cmd.children[2])
+        return f"{rhs}\nmov rax, [{lhs}]\nmov [{lhs}+{e}],rax"
 
 
 def compile_bloc(bloc):
