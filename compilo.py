@@ -206,16 +206,16 @@ def compile(prg):
 
 # print(compile_prg(grammaire.parse(program)))
 
-# program = "".join(open(args.file).readlines())
-program = """main(X,Y){
-    
-    U=4+3;
-    printf(Y-X);
-    printf(3+8);
-    return(U+X);
-    }"""
+program = "".join(open(args.file).readlines())
+# program = """main(X,Y){
+
+#     U=4+3;
+#     printf(Y-X);
+#     printf(3+8);
+#     return(U+X);
+#     }"""
 
 print(compile(grammaire.parse(program)))
-# print("\n")
-# with open("prog.asm", "w") as f:
-#     f.write(compile(grammaire.parse(program)))
+print("\n")
+with open("prog.asm", "w") as f:
+    f.write(compile(grammaire.parse(program)))
