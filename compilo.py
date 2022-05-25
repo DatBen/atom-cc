@@ -2,7 +2,7 @@ import lark
 
 grammaire = lark.Lark(
     """ variables: IDENTIFIANT ("," IDENTIFIANT)*
-    expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr | "new"  "int" "[" expr "]" -> new_array | IDENTIFIANT "[" expr "]" -> array_access
+    expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr | "new"  "int" "[" expr "]" -> new_array | IDENTIFIANT "[" expr "]" -> array_access | "len(" IDENTIFIANT ")" -> len_array
     NUMBER : /[0-9]+/
     cmd : IDENTIFIANT "=" expr ";" -> assignement | IDENTIFIANT "[" expr "]" "=" expr ";" -> array_assignement | "while" "("expr")" "{" bloc "}" -> while | "if" "("expr")" "{" bloc "}" -> if | "printf" "("expr")" ";" -> printf
     bloc : (cmd)*
@@ -28,6 +28,8 @@ def pp_expr(expr):
         return f"{expr.children[0].value}[{pp_expr(expr.children[1])}]"
     elif expr.data == "new_array":
         return f"new int[{pp_expr(expr.children[0])}]"
+    elif expr.data == "len_array":
+        return f"len({expr.children[0].value})"
     else:
         return expr.data  # not implemented
 
@@ -82,6 +84,7 @@ def var_list(ast):
 nb_while = 0
 nb_if = 0
 nb_de = 0
+n_malloc = 0
 
 
 def compile_expr(expr):
@@ -110,6 +113,19 @@ def compile_expr(expr):
     if expr.data == "nombre":
         e = expr.children[0].value
         return f"\nmov rax,{e}"
+    if expr.data == "new_array":
+        e = compile_expr(expr.children[0])
+        res = f"mov rdi, {8*int(e+1)}\ncall malloc\nmov [rax], {int(e)}\n"
+        return res
+    if expr.data == "len_array":
+        e = expr.children[0].value
+        return f"mov rax, QWORD PTR [{e}]"
+    if expr.data == "array_access":
+        id = expr.children[0].value
+        e = compile_expr(expr.children[1])
+        e = 8*(int(e)+1)
+        e = str(e)
+        return f"mov rax, QWORD PTR [{id}]\nmov rax, QWORD PTR [rax+{e}]"
 
 
 def compile_cmd(cmd):
@@ -168,7 +184,7 @@ def compile(prg):
 # print(compile_prg(grammaire.parse(program)))
 
 
-program = "a[7]=4;"
+program = "a=len(t);"
 g = grammaire.parse(program)
 print(g)
 print(pp_cmd(g))
