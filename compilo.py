@@ -1,5 +1,13 @@
 import lark
 
+import argparse
+
+
+parser = argparse.ArgumentParser(description="Compile a program")
+parser.add_argument("--file", help="the file to compile")
+args = parser.parse_args()
+
+
 grammaire = lark.Lark(
     """ variables: IDENTIFIANT ("," IDENTIFIANT)*
     expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr
@@ -157,8 +165,8 @@ def compile(prg):
 
 # print(compile_prg(grammaire.parse(program)))
 
+program="".join(open(args.file).readlines())
 
-program = "main(a){a=10;while(a!=8){a=a-1;printf(a);}return(a);}"
 print(pp_prg(grammaire.parse(program)))
 print("\n")
 with open("prog.asm", "w") as f:
