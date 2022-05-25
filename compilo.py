@@ -1,5 +1,13 @@
 import lark
 
+import argparse
+
+
+parser = argparse.ArgumentParser(description="Compile a program")
+parser.add_argument("--file", help="the file to compile")
+args = parser.parse_args()
+
+
 grammaire = lark.Lark(
     """ variables: IDENTIFIANT ("," IDENTIFIANT)*
     expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr
@@ -88,11 +96,12 @@ def compile_expr(expr):
         if op == "-":
             return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
         if op == "*":
-            return f"{e2}\npush rax\n{e1}\npop rbx\nimul rax,rbx"
+            return f"{e2}\npush rax\n{e1}\npop rbx\nmul rax,rbx"
         if op == "!=":
             return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
         if op == "==":
-            return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
+            return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx\ncmp rax,0\nje finrax\nmov rax 1\njmp finrax\nfin:mov rax, 0\n"
+
     if expr.data == "parenexpr":
         return compile_expr(expr.children[0])
     if expr.data == "variable":
@@ -160,13 +169,9 @@ def compile(prg):
 
 # print(compile_prg(grammaire.parse(program)))
 
-prg2 = grammaire.parse(
-    """main(X,Y) {
-printf(Y-X);
-printf(Y*X);
+program = "".join(open(args.file).readlines())
 
-return(Y);}"""
-)
-
-
-print(compile(prg2))
+print(pp_prg(grammaire.parse(program)))
+print("\n")
+with open("prog.asm", "w") as f:
+    f.write(compile(grammaire.parse(program)))
