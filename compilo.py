@@ -209,10 +209,11 @@ def compile(prg):
 # print(compile_prg(grammaire.parse(program)))
 
 # program = "".join(open(args.file).readlines())
-program = """main(X){
-    X=3;
+program = """main(X,Y){
+    
     U=4+3;
-    printf(2+6);
+    printf(Y-X);
+    printf(3+8);
     return(U+X);
     }"""
 
