@@ -19,7 +19,9 @@ grammaire = lark.Lark(
     IDENTIFIANT : /[a-zA-Z][a-zA-Z0-9]*/
     %import common.WS
     %ignore WS
-     """, start="prog")
+     """,
+    start="prog",
+)
 
 
 def pp_expr(expr):
@@ -148,7 +150,8 @@ def compile_prg(prog):
 def compile_vars(ast):
     s = ""
     for i in range(len(ast.children)):
-        s += f"\nmov rbx, [rbp-0x10]\nmov rdi,[rbx-{8*(i)}]\ncall atoi\nmov [{ast.children[i].value}],rax"
+        s += f"\nmov rbx, [rbp-0x10]\nmov rdi, [rbx+{8*(i+1)}]\ncall atoi\n\
+mov [{ast.children[i].value}], rax\n"
     return s
 
 
@@ -163,9 +166,10 @@ def compile(prg):
         code = code.replace("VAR_INIT", compile_vars(prg.children[0]))
         return code
 
+
 # print(compile_prg(grammaire.parse(program)))
 
-program="".join(open(args.file).readlines())
+program = "".join(open(args.file).readlines())
 
 print(pp_prg(grammaire.parse(program)))
 print("\n")
