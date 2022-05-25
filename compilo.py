@@ -2,7 +2,7 @@ import lark
 
 grammaire = lark.Lark(
     """ variables: IDENTIFIANT ("," IDENTIFIANT)*
-    expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr | "new" IDENTIFIANT "[" expr "]" -> new_array
+    expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr | "new" IDENTIFIANT "[" expr "]" -> new_array | IDENTIFIANT "[" expr "]" -> array_access
     NUMBER : /[0-9]+/
     cmd : IDENTIFIANT "=" expr ";" -> assignement | IDENTIFIANT "[" expr "]" "=" expr ";" -> array_assignement | "while" "("expr")" "{" bloc "}" -> while | "if" "("expr")" "{" bloc "}" -> if | "printf" "("expr")" ";" -> printf
     bloc : (cmd)*
