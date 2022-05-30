@@ -223,7 +223,9 @@ def compile_expr(expr, values):
         e1 = compile_expr(expr.children[0], values)
         e2 = compile_expr(expr.children[2], values)
         if str.isdigit(e1) and str.isdigit(e2):
+
             return f"{operation(op,int(e1),int(e2))}"
+
         return comp_op(op, e1, e2)
         # if expr.data == "binexpr":
         # op = expr.children[1].value
@@ -251,8 +253,11 @@ def compile_expr(expr, values):
     if expr.data == "parenexpr":
         return compile_expr(expr.children[0], values)
     if expr.data == "variable":
-        e = expr.children[0].value
-        return f"\nmov rax,[{e}]"
+        if values[expr.children[0].value] is not None:
+            return f"\nmov rax, {values[expr.children[0].value]}"
+        else:
+            return f"\nmov rax,[{expr.children[0].value}]"
+
     if expr.data == "nombre":
         e = f"{expr.children[0].value}"
         return f"\nmov rax,{e}"
@@ -262,6 +267,8 @@ def compile_cmd(cmd, values):
     global nb_while
     global nb_if
     if cmd.data == "assignement":
+        if values[cmd.children[0].value] is not None:
+            return ""
         lhs = cmd.children[0].value
         rhs = compile_expr(cmd.children[1], values)
         return f"{rhs}\nmov [{lhs}],rax"
@@ -318,7 +325,6 @@ def compile(prg):
 program = """main(X,Y){
 
     U=(5*(4+2));
-    A=4;
     C=(U*X)+5;
     if (C!=63) {
     C=3;
