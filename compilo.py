@@ -23,6 +23,73 @@ grammaire = lark.Lark(
 )
 
 
+def create_dict(prg, vars):
+    vars = var_list(prg)
+    repetition = dict.fromkeys(vars, 0)
+    values = dict.fromkeys(vars, 0)
+    return repetition, values
+
+
+def find_assignement(prg, rep):
+
+    if prg.data == "assignement":
+        rep[prg.children[0]] += 1
+
+    else:
+        for c in prg.children:
+            if isinstance(c, lark.Tree):
+                rep = find_assignement(c, rep)
+    return rep
+
+
+def find_values(prg, rep, values):
+
+    if prg.data == "assignement" and rep[prg.children[0]] < 2:
+        print("-------------\n", rec_isImmediat(prg.children[1]))
+        flag, res = rec_isImmediat(prg.children[1])
+        if flag:
+            values[prg.children[0]] = res
+        # if isImmediat(prg.children[1]):
+        #     op = prg.children[1].children[1]
+        #     e1 = int(prg.children[1].children[0].children[0].value)
+        #     e2 = int(prg.children[1].children[2].children[0].value)
+        #     values[prg.children[0]] = operation(op, e1, e2)
+        elif prg.children[1].data == "nombre":
+            values[prg.children[0]] = prg.children[1].children[0].value
+        else:
+            pass
+
+    else:
+        for c in prg.children:
+            if isinstance(c, lark.Tree):
+                values = find_values(c, rep, values)
+    return values
+
+
+def isImmediat(expr):
+    return (
+        expr.data == "binexpr"
+        and expr.children[0].data == "nombre"
+        and expr.children[2].data == "nombre"
+    )
+
+
+def rec_isImmediat(expr):
+    if expr.data == "nombre":
+        return True, int(expr.children[0].value)
+    elif expr.data == "binexpr":
+        flag1, res1 = rec_isImmediat(expr.children[0])
+        flag2, res2 = rec_isImmediat(expr.children[2])
+        if flag1 and flag2:
+            return True, operation(expr.children[1].value, res1, res2)
+        else:
+            return False, None
+    elif expr.data == "parenexpr":
+        return rec_isImmediat(expr.children[0])
+    else:
+        return False, None
+
+
 def operation(op, nb1, nb2):
     if op == "+":
         return nb1 + nb2
@@ -44,40 +111,49 @@ def operation(op, nb1, nb2):
         raise Exception("Not Implemented")
 
 
-def pp_expr(expr):
-    if expr.data == "binexpr":
-        # print(expr)
+def pp_expr(expr, values):
+    flag, res = rec_isImmediat(expr)
+    if flag:
+        return f"({res})"
+    elif expr.data == "binexpr":
+        print("bop")
         op = expr.children[1].value
-        if (
-            expr.children[0].data == "nombre"
-            and expr.children[2].data == "nombre"
-        ):
-            e1 = int(expr.children[0].children[0].value)
-            e2 = int(expr.children[2].children[0].value)
-            return f"{operation(op,e1,e2)}"
-
-        e1 = pp_expr(expr.children[0])
-        e2 = pp_expr(expr.children[2])
-
+        e1 = pp_expr(expr.children[0], values)
+        e2 = pp_expr(expr.children[2], values)
         return f"({e1} {op} {e2})"
+
+    # if expr.data == "binexpr":
+    #     op = expr.children[1].value
+    #     if rec_isImmediat(expr):
+    #         e1 = int(expr.children[0].children[0].value)
+    #         e2 = int(expr.children[2].children[0].value)
+    #         return f"{operation(op,e1,e2)}"
+
+    #     e1 = pp_expr(expr.children[0], values)
+    #     e2 = pp_expr(expr.children[2], values)
+
+    #     return f"({e1} {op} {e2})"
     elif expr.data == "parenexpr":
         return f"({pp_expr(expr.children[0])})"
-    elif expr.data in {"variable", "nombre"}:
+    elif expr.data == "nombre":
         return expr.children[0].value
+    elif expr.data == "variable":
+        if values[expr.children[0].value] is not None:
+            return values[expr.children[0].value]
 
     else:
         return expr.data  # not implemented
 
 
-def pp_cmd(cmd):
+def pp_cmd(cmd, values):
     if cmd.data == "assignement":
         lhs = cmd.children[0].value
-        rhs = pp_expr(cmd.children[1])
+        rhs = pp_expr(cmd.children[1], values)
         return f"{lhs} = {rhs};"
     elif cmd.data == "printf":
-        return f"printf({pp_expr(cmd.children[0])});"
+        return f"printf({pp_expr(cmd.children[0]),values});"
     elif cmd.data in {"if", "while"}:
-        e = pp_expr(cmd.children[0])
+        e = pp_expr(cmd.children[0], values)
         b = pp_bloc(cmd.children[1])
         return f"{cmd.data}({e}){{\n {b} }}"
 
@@ -85,8 +161,8 @@ def pp_cmd(cmd):
         raise NotImplementedError(cmd.data)
 
 
-def pp_bloc(bloc):
-    return "\n ".join(pp_cmd(cmd) for cmd in bloc.children)
+def pp_bloc(bloc, values):
+    return "\n ".join(pp_cmd(cmd, values) for cmd in bloc.children)
 
 
 def pp_variables(variables):
@@ -94,9 +170,19 @@ def pp_variables(variables):
 
 
 def pp_prg(prog):
+    vars_list = var_list(prog)
+
+    dict_assignement = find_assignement(prog, dict.fromkeys(vars_list, 0))
+    dict_values = find_values(
+        prog, dict_assignement, dict.fromkeys(vars_list, None)
+    )
+
+    print("assignement", dict_assignement)
+    print("valeurs", dict_values)
+
     vars = pp_variables(prog.children[0])
-    bloc = pp_bloc(prog.children[1])
-    ret = pp_expr(prog.children[2])
+    bloc = pp_bloc(prog.children[1], dict_values)
+    ret = pp_expr(prog.children[2], dict_values)
     return f"main ({vars}) {{\n {bloc} \n return({ret});\n}}"
 
 
@@ -193,6 +279,7 @@ mov [{ast.children[i].value}], rax\n"
 
 
 def compile(prg):
+
     with open("moule.asm") as f:
         code = f.read()
         vars_decl = "\n".join([f"{x}: dq 0" for x in var_list(prg)])
@@ -206,16 +293,17 @@ def compile(prg):
 
 # print(compile_prg(grammaire.parse(program)))
 
-program = "".join(open(args.file).readlines())
-# program = """main(X,Y){
+# program = "".join(open(args.file).readlines())
+program = """main(X,Y){
 
-#     U=4+3;
-#     printf(Y-X);
-#     printf(3+8);
-#     return(U+X);
-#     }"""
+    U=(5*(4+2))+1;
+    A=4;
+    C=U+2;
+    return(U);
+    }"""
 
 print(pp_prg(grammaire.parse(program)))
+# print(grammaire.parse(program).children[1].children)
 print("\n")
-with open("prog.asm", "w") as f:
-    f.write(compile(grammaire.parse(program)))
+# with open("prog.asm", "w") as f:
+#     f.write(compile(grammaire.parse(program)))
