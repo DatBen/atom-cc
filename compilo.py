@@ -46,7 +46,6 @@ def find_assignement(prg, rep):
 def find_values(prg, rep, values):
 
     if prg.data == "assignement" and rep[prg.children[0]] < 2:
-        print("-------------\n", rec_isImmediat(prg.children[1]))
         flag, res = rec_isImmediat(prg.children[1])
         if flag:
             values[prg.children[0]] = res
@@ -180,10 +179,6 @@ def pp_prg(prog):
     dict_values = find_values(
         prog, dict_assignement, dict.fromkeys(vars_list, None)
     )
-
-    print("assignement", dict_assignement)
-    print("valeurs", dict_values)
-
     vars = pp_variables(prog.children[0])
     bloc = pp_bloc(prog.children[1], dict_values)
     ret = pp_expr(prog.children[2], dict_values)
@@ -206,72 +201,89 @@ nb_while = 0
 nb_if = 0
 
 
-def compile_expr(expr):
-    if expr.data == "binexpr":
+def comp_op(op, e1, e2):
+    if op == "+":
+        return f"{e2}\npush rax\n{e1}\npop rbx\nadd rax,rbx"
+    if op == "-":
+        return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
+    if op == "*":
+        return f"{e2}\npush rax\n{e1}\npop rbx\nimul rax,rbx"
+    if op == "!=":
+        return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
+    if op == "==":
+        return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx\ncmp rax,0\nje finrax\nmov rax 1\njmp finrax\nfin:mov rax, 0\n"
+
+
+def compile_expr(expr, values):
+    flag, res = rec_isImmediat(expr)
+    if flag:
+        return f"\nmov rax, {res}"
+    elif expr.data == "binexpr":
         op = expr.children[1].value
-        if (
-            expr.children[0].data == "nombre"
-            and expr.children[2].data == "nombre"
-        ):
-            e1 = int(expr.children[0].children[0].value)
-            e2 = int(expr.children[2].children[0].value)
-            return f"\nmov rax, {operation(op,e1,e2)}"
-        e1 = compile_expr(expr.children[0])
-        e2 = compile_expr(expr.children[2])
-        if op == "+":
-            return f"{e2}\npush rax\n{e1}\npop rbx\nadd rax,rbx"
-        if op == "-":
-            return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
-        if op == "*":
-            return f"{e2}\npush rax\n{e1}\npop rbx\nmul rax,rbx"
-        if op == "!=":
-            return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
-        if op == "==":
-            return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx\ncmp rax,0\nje finrax\nmov rax 1\njmp finrax\nfin:mov rax, 0\n"
+        e1 = compile_expr(expr.children[0], values)
+        e2 = compile_expr(expr.children[2], values)
+        if str.isdigit(e1) and str.isdigit(e2):
+            return f"{operation(op,int(e1),int(e2))}"
+        return comp_op(op, e1, e2)
+        # if expr.data == "binexpr":
+        # op = expr.children[1].value
+        # if (
+        #     expr.children[0].data == "nombre"
+        #     and expr.children[2].data == "nombre"
+        # ):
+        #     e1 = int(expr.children[0].children[0].value)
+        #     e2 = int(expr.children[2].children[0].value)
+        #     return f"\nmov rax, {operation(op,e1,e2)}"
+        # e1 = compile_expr(expr.children[0])
+        # e2 = compile_expr(expr.children[2])
+        # return comp_op(op, e1, e2)
+        # if op == "+":
+        #     return f"{e2}\npush rax\n{e1}\npop rbx\nadd rax,rbx"
+        # if op == "-":
+        #     return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
+        # if op == "*":
+        #     return f"{e2}\npush rax\n{e1}\npop rbx\nmul rax,rbx"
+        # if op == "!=":
+        #     return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
+        # if op == "==":
+        #     return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx\ncmp rax,0\nje finrax\nmov rax 1\njmp finrax\nfin:mov rax, 0\n"
 
     if expr.data == "parenexpr":
-        return compile_expr(expr.children[0])
+        return compile_expr(expr.children[0], values)
     if expr.data == "variable":
         e = expr.children[0].value
         return f"\nmov rax,[{e}]"
     if expr.data == "nombre":
-        e = expr.children[0].value
+        e = f"{expr.children[0].value}"
         return f"\nmov rax,{e}"
 
 
-def compile_cmd(cmd):
+def compile_cmd(cmd, values):
     global nb_while
     global nb_if
     if cmd.data == "assignement":
         lhs = cmd.children[0].value
-        rhs = compile_expr(cmd.children[1])
+        rhs = compile_expr(cmd.children[1], values)
         return f"{rhs}\nmov [{lhs}],rax"
     if cmd.data == "printf":
-        return f"{compile_expr(cmd.children[0])}\nmov rdi,fmt\nmov rsi,rax\nxor rax,rax\ncall printf"
+        return f"{compile_expr(cmd.children[0],values)}\nmov rdi,fmt\nmov rsi,rax\nxor rax,rax\ncall printf"
     if cmd.data == "if":
         nb_if += 1
-        e = compile_expr(cmd.children[0])
-        b = compile_bloc(cmd.children[1])
+        e = compile_expr(cmd.children[0], values)
+        b = compile_bloc(cmd.children[1], values)
         return f"{e}\ncmp rax,0\njz end_if{nb_if}\n{b}\nend_if{nb_if}:"
     if cmd.data == "while":
         nb_while += 1
-        e = compile_expr(cmd.children[0])
-        b = compile_bloc(cmd.children[1])
+        e = compile_expr(cmd.children[0], values)
+        b = compile_bloc(cmd.children[1], values)
         return f"\ndeb_while{nb_while}:\n{e}\ncmp rax,0\njz end_while{nb_while}\n{b}\njmp deb_while{nb_while}\nend_while{nb_while}:"
 
 
-def compile_bloc(bloc):
+def compile_bloc(bloc, values):
     res = ""
     for cmd in bloc.children:
-        res += compile_cmd(cmd)
+        res += compile_cmd(cmd, values)
     return res
-
-
-def compile_prg(prog):
-    vars = prog.children[0]
-    bloc = prog.children[1]
-    ret = prog.children[2]
-    return compile_bloc(bloc)
 
 
 def compile_vars(ast):
@@ -283,31 +295,40 @@ mov [{ast.children[i].value}], rax\n"
 
 
 def compile(prg):
+    vars_list = var_list(prg)
+
+    dict_assignement = find_assignement(prg, dict.fromkeys(vars_list, 0))
+    dict_values = find_values(
+        prg, dict_assignement, dict.fromkeys(vars_list, None)
+    )
 
     with open("moule.asm") as f:
         code = f.read()
         vars_decl = "\n".join([f"{x}: dq 0" for x in var_list(prg)])
-        prog = compile_prg(prg)
         code = code.replace("VAR_DECL", vars_decl)
-        code = code.replace("RETURN", compile_expr(prg.children[2]))
-        code = code.replace("BODY", prog)
+        code = code.replace(
+            "RETURN", compile_expr(prg.children[2], dict_values)
+        )
+        code = code.replace("BODY", compile_bloc(prg.children[1], dict_values))
         code = code.replace("VAR_INIT", compile_vars(prg.children[0]))
         return code
 
 
-# print(compile_prg(grammaire.parse(program)))
-
 # program = "".join(open(args.file).readlines())
 program = """main(X,Y){
 
-    U=(5*(4+2))+1;
+    U=(5*(4+2));
     A=4;
-    C=(U+Y)*X;
-    return(U);
+    C=(U*X)+5;
+    if (C!=63) {
+    C=3;
+    }
+    return(C);
     }"""
 
-print(pp_prg(grammaire.parse(program)))
+print(compile(grammaire.parse(program)))
+# print(pp_prg(grammaire.parse(program)))
 # print(grammaire.parse(program).children[1].children)
-print("\n")
+# print("\n")
 # with open("prog.asm", "w") as f:
 #     f.write(compile(grammaire.parse(program)))
