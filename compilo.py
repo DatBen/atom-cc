@@ -1,3 +1,4 @@
+from curses.ascii import isdigit
 import lark
 import argparse
 
@@ -114,13 +115,14 @@ def operation(op, nb1, nb2):
 def pp_expr(expr, values):
     flag, res = rec_isImmediat(expr)
     if flag:
-        return f"({res})"
+        return f"{res}"
     elif expr.data == "binexpr":
-        print("bop")
         op = expr.children[1].value
         e1 = pp_expr(expr.children[0], values)
         e2 = pp_expr(expr.children[2], values)
-        return f"({e1} {op} {e2})"
+        if str.isdigit(e1) and str.isdigit(e2):
+            return f"{operation(op,int(e1),int(e2))}"
+        return f"{e1} {op} {e2}"
 
     # if expr.data == "binexpr":
     #     op = expr.children[1].value
@@ -134,12 +136,14 @@ def pp_expr(expr, values):
 
     #     return f"({e1} {op} {e2})"
     elif expr.data == "parenexpr":
-        return f"({pp_expr(expr.children[0])})"
+        return f"({pp_expr(expr.children[0],values)})"
     elif expr.data == "nombre":
-        return expr.children[0].value
+        return f"{expr.children[0].value}"
     elif expr.data == "variable":
         if values[expr.children[0].value] is not None:
-            return values[expr.children[0].value]
+            return f"{values[expr.children[0].value]}"
+        else:
+            return f"{expr.children[0].value}"
 
     else:
         return expr.data  # not implemented
@@ -298,7 +302,7 @@ program = """main(X,Y){
 
     U=(5*(4+2))+1;
     A=4;
-    C=U+2;
+    C=(U+Y)*X;
     return(U);
     }"""
 
