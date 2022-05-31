@@ -187,7 +187,7 @@ def compile(prg):
 # print(compile_prg(grammaire.parse(program)))
 
 
-program = "main(a){a=new int[10];return (a);}"
+program = "main(a,b){a=new int[10];b=5;a[2]=b;b=a[3];return (len(a));}"
 g = grammaire.parse(program)
 print(g)
 print(compile(g))
