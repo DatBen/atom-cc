@@ -123,9 +123,7 @@ def compile_expr(expr):
     if expr.data == "array_access":
         id = expr.children[0].value
         e = compile_expr(expr.children[1])
-        e = 8*(int(e)+1)
-        e = str(e)
-        return f"mov rax, QWORD PTR [{id}]\nmov rax, QWORD PTR [rax+{e}]"
+        return f"{e}\npush rax\nmov rax, QWORD PTR [{id}]\npop rbx\nmov rax, QWORD PTR [rax+rbx*8+8]"
 
 
 def compile_cmd(cmd):
