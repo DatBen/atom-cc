@@ -115,7 +115,7 @@ def compile_expr(expr):
         return f"\nmov rax,{e}"
     if expr.data == "new_array":
         e = compile_expr(expr.children[0])
-        res = f"mov rdi, {str(8*int(e)+8)}\ncall malloc\npush rax\n{e}\npop rbx\nmov [rbx], rax\n"
+        res = f"{e}\npush rax\npop rbx\nmov rdi, rbx*8+8\ncall malloc\nmov [rax], rbx\n"
         return res
     if expr.data == "len_array":
         e = expr.children[0].value
@@ -195,5 +195,5 @@ print(g)
 print(compile(g))
 # print(pp_prg(grammaire.parse(program)))
 # print("\n")
-# with open("prog.asm", "w") as f:
-#     f.write(compile(grammaire.parse(program)))
+with open("prog.asm", "w") as f:
+    f.write(compile(grammaire.parse(program)))
