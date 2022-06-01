@@ -122,17 +122,11 @@ def pp_expr(expr, values, opti):
             if str.isdigit(e1) and str.isdigit(e2):
                 return f"{operation(op,int(e1),int(e2))}"
             return f"{e1} {op} {e2}"
-        # elif expr.data == "parenexpr":
-        #     return f"({pp_expr(expr.children[0],values,opti)})"
-        # elif expr.data == "nombre":
-        #     return f"{expr.children[0].value}"
         elif expr.data == "variable":
             if values[expr.children[0].value] is not None:
                 return f"{values[expr.children[0].value]}"
             else:
                 return f"{expr.children[0].value}"
-        # else:
-        #     return expr.data  # not implemented
     else:
 
         if expr.data == "binexpr":
@@ -241,28 +235,6 @@ def compile_expr(expr, values, opti):
                 return f"\nmov rax, {values[expr.children[0].value]}"
             else:
                 return f"\nmov rax,[{expr.children[0].value}]"
-        # if expr.data == "binexpr":
-        # op = expr.children[1].value
-        # if (
-        #     expr.children[0].data == "nombre"
-        #     and expr.children[2].data == "nombre"
-        # ):
-        #     e1 = int(expr.children[0].children[0].value)
-        #     e2 = int(expr.children[2].children[0].value)
-        #     return f"\nmov rax, {operation(op,e1,e2)}"
-        # e1 = compile_expr(expr.children[0])
-        # e2 = compile_expr(expr.children[2])
-        # return comp_op(op, e1, e2)
-        # if op == "+":
-        #     return f"{e2}\npush rax\n{e1}\npop rbx\nadd rax,rbx"
-        # if op == "-":
-        #     return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
-        # if op == "*":
-        #     return f"{e2}\npush rax\n{e1}\npop rbx\nmul rax,rbx"
-        # if op == "!=":
-        #     return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
-        # if op == "==":
-        #     return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx\ncmp rax,0\nje finrax\nmov rax 1\njmp finrax\nfin:mov rax, 0\n"
     else:
         if expr.data == "binexpr":
             op = expr.children[1].value
