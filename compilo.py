@@ -207,9 +207,11 @@ def var_list(ast):
 
 nb_while = 0
 nb_if = 0
+nb_de = 0
 
 
 def comp_op(op, e1, e2):
+    global nb_de
     if op == "+":
         return f"{e2}\npush rax\n{e1}\npop rbx\nadd rax,rbx"
     if op == "-":
@@ -219,7 +221,8 @@ def comp_op(op, e1, e2):
     if op == "!=":
         return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
     if op == "==":
-        return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx\ncmp rax,0\nje finrax\nmov rax 1\njmp finrax\nfin:mov rax, 0\n"
+        nb_de += 1
+        return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx\ncmp rax,0\nje fin_de{nb_de}\nmov rax,0\njmp fin_de{nb_de}_2\nfin_de{nb_de}:\nmov rax, 1\nfin_de{nb_de}_2:\n"
 
 
 def compile_expr(expr, values, opti):
@@ -349,7 +352,7 @@ program = """main(X,Y){
 
     U=(10*(4+2));
     C=(U*X)+5;
-    if (C!=65) {
+    if (C==65) {
     printf(C);
     C=3;
     }
