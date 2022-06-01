@@ -1,9 +1,13 @@
 main(a)
 {
-    while (a != 8)
-    {
-        a = a - 1;
-        printf(a);
-    }
-    return (a);
+    a=new int[5];
+    a[2]=1;
+    a[4]=3;
+
+    showarr(a);
+    b=new int[7];
+    b[2]=4;
+    b[4]=54;
+    showarr(b);
+    return(0);
 }
