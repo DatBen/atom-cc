@@ -1,0 +1,4 @@
+*.asm
+!moule.asm
+*.o
+*.out

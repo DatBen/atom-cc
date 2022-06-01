@@ -1,4 +1,11 @@
 import lark
+import argparse
+
+
+parser = argparse.ArgumentParser(description="Compile a program")
+parser.add_argument("--file", help="the file to compile")
+args = parser.parse_args()
+
 
 grammaire = lark.Lark(
     """ variables: IDENTIFIANT ("," IDENTIFIANT)*
@@ -11,14 +18,47 @@ grammaire = lark.Lark(
     IDENTIFIANT : /[a-zA-Z][a-zA-Z0-9]*/
     %import common.WS
     %ignore WS
-     """, start="prog")
+     """,
+    start="prog",
+)
+
+
+def operation(op, nb1, nb2):
+    if op == "+":
+        return nb1 + nb2
+    elif op == "-":
+        return nb1 - nb2
+    elif op == "*":
+        return nb1 * nb2
+    elif op == "==":
+        if nb1 == nb2:
+            return 1
+        else:
+            return 0
+    elif op == "!=":
+        if nb1 == nb2:
+            return 0
+        else:
+            return 1
+    else:
+        raise Exception("Not Implemented")
 
 
 def pp_expr(expr):
     if expr.data == "binexpr":
+        # print(expr)
+        op = expr.children[1].value
+        if (
+            expr.children[0].data == "nombre"
+            and expr.children[2].data == "nombre"
+        ):
+            e1 = int(expr.children[0].children[0].value)
+            e2 = int(expr.children[2].children[0].value)
+            return f"{operation(op,e1,e2)}"
+
         e1 = pp_expr(expr.children[0])
         e2 = pp_expr(expr.children[2])
-        op = expr.children[1].value
+
         return f"({e1} {op} {e2})"
     elif expr.data == "parenexpr":
         return f"({pp_expr(expr.children[0])})"
@@ -90,9 +130,16 @@ n_malloc = 0
 def compile_expr(expr):
     global nb_de
     if expr.data == "binexpr":
+        op = expr.children[1].value
+        if (
+            expr.children[0].data == "nombre"
+            and expr.children[2].data == "nombre"
+        ):
+            e1 = int(expr.children[0].children[0].value)
+            e2 = int(expr.children[2].children[0].value)
+            return f"\nmov rax, {operation(op,e1,e2)}"
         e1 = compile_expr(expr.children[0])
         e2 = compile_expr(expr.children[2])
-        op = expr.children[1].value
         if op == "+":
             return f"{e2}\npush rax\n{e1}\npop rbx\nadd rax,rbx"
         if op == "-":
@@ -169,7 +216,9 @@ def compile_prg(prog):
 def compile_vars(ast):
     s = ""
     for i in range(len(ast.children)):
-        s += f"\nmov rbx, [rbp-0x10]\nmov rdi,[rbx+{8*(i+1)}]\ncall atoi\nmov [{ast.children[i].value}],rax"
+        s += f"\nmov rbx, [rbp-0x10]\nmov rdi, [rbx+{8*(i+1)}]\ncall atoi\n\
+mov [{ast.children[i].value}], rax\n"
+
     return s
 
 
@@ -184,7 +233,17 @@ def compile(prg):
         code = code.replace("VAR_INIT", compile_vars(prg.children[0]))
         return code
 
+
 # print(compile_prg(grammaire.parse(program)))
+
+program = "".join(open(args.file).readlines())
+# program = """main(X,Y){
+
+#     U=4+3;
+#     printf(Y-X);
+#     printf(3+8);
+#     return(U+X);
+#     }"""
 
 
 program = "main(a){a=new int[10];return (a);}"

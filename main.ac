@@ -1,0 +1,9 @@
+main(a)
+{
+    while (a != 8)
+    {
+        a = a - 1;
+        printf(a);
+    }
+    return (a);
+}
