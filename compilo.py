@@ -11,7 +11,7 @@ grammaire = lark.Lark(
     """ variables: IDENTIFIANT ("," IDENTIFIANT)*
     expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr | "new"  "int" "[" expr "]" -> new_array | IDENTIFIANT "[" expr "]" -> array_access | "len(" IDENTIFIANT ")" -> len_array
     NUMBER : /[0-9]+/
-    cmd : IDENTIFIANT "=" expr ";" -> assignement | IDENTIFIANT "[" expr "]" "=" expr ";" -> array_assignement | "while" "("expr")" "{" bloc "}" -> while | "if" "("expr")" "{" bloc "}" -> if | "printf" "("expr")" ";" -> printf
+    cmd : IDENTIFIANT "=" expr ";" -> assignement | IDENTIFIANT "[" expr "]" "=" expr ";" -> array_assignement | "while" "("expr")" "{" bloc "}" -> while | "if" "("expr")" "{" bloc "}" -> if | "printf" "("expr")" ";" -> printf | "showarr" "("expr")" ";" -> showarr
     bloc : (cmd)*
     prog: "main" "(" variables ")" "{" bloc "return" "(" expr ")" ";" "}"
     OP : "+" | "-" | "*" | ">" | "<" | "==" | "!="
@@ -172,7 +172,11 @@ def pp_cmd(cmd, values, opti):
         rhs = pp_expr(cmd.children[2])
         return f"{lhs} = {rhs};"
     elif cmd.data == "printf":
-        return f"printf({pp_expr(cmd.children[0],values,opti)});"
+        return f"printf({pp_expr(cmd.children[0]),values,opti});"
+    elif cmd.data == "showarr":
+        tab = pp_expr(cmd.children[0],values,opti)
+        return tab+"showarr=0;\nwhile("+tab+"showarr!=len("+tab+")){\nprintf("+tab+"["+tab+"showarr]);\n"+tab+"showarr="+tab+"showarr+1;\n}\n"
+
     elif cmd.data in {"if", "while"}:
         e = pp_expr(cmd.children[0], values, opti)
         b = pp_bloc(cmd.children[1], values, opti)
@@ -351,7 +355,7 @@ def compile(prg, opti=False):
 
 # print(compile_prg(grammaire.parse(program)))
 
-program = "".join(open(args.file).readlines())
+
 # program = """main(X,Y){
 
 #     U=4+3;
@@ -361,10 +365,16 @@ program = "".join(open(args.file).readlines())
 #     }"""
 
 
-# program = "main(a,b){a=new int[10];printf(len(a));a[0]=2;return (len(a));}"
-g = grammaire.parse(program)
+
 
 # print(pp_prg(grammaire.parse(program)))
 # print("\n")
+program = grammaire.parse("".join(open(args.file).readlines()))
+program = pp_prg(program)
+program = grammaire.parse(program)
+
 with open("prog.asm", "w") as f:
-    f.write(compile(grammaire.parse(program)))
+    f.write(compile(program))
+
+
+print(pp_prg(program))
