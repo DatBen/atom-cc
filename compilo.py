@@ -9,9 +9,9 @@ args = parser.parse_args()
 
 grammaire = lark.Lark(
     """ variables: IDENTIFIANT ("," IDENTIFIANT)*
-    expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr
+    expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr | "new"  "int" "[" expr "]" -> new_array | IDENTIFIANT "[" expr "]" -> array_access | "len(" IDENTIFIANT ")" -> len_array
     NUMBER : /[0-9]+/
-    cmd : IDENTIFIANT "=" expr ";" -> assignement | "while" "("expr")" "{" bloc "}" -> while | "if" "("expr")" "{" bloc "}" -> if | "printf" "("expr")" ";" -> printf
+    cmd : IDENTIFIANT "=" expr ";" -> assignement | IDENTIFIANT "[" expr "]" "=" expr ";" -> array_assignement | "while" "("expr")" "{" bloc "}" -> while | "if" "("expr")" "{" bloc "}" -> if | "printf" "("expr")" ";" -> printf
     bloc : (cmd)*
     prog: "main" "(" variables ")" "{" bloc "return" "(" expr ")" ";" "}"
     OP : "+" | "-" | "*" | ">" | "<" | "==" | "!="
@@ -64,7 +64,12 @@ def pp_expr(expr):
         return f"({pp_expr(expr.children[0])})"
     elif expr.data in {"variable", "nombre"}:
         return expr.children[0].value
-
+    elif expr.data == "array_access":
+        return f"{expr.children[0].value}[{pp_expr(expr.children[1])}]"
+    elif expr.data == "new_array":
+        return f"new int[{pp_expr(expr.children[0])}]"
+    elif expr.data == "len_array":
+        return f"len({expr.children[0].value})"
     else:
         return expr.data  # not implemented
 
@@ -73,6 +78,10 @@ def pp_cmd(cmd):
     if cmd.data == "assignement":
         lhs = cmd.children[0].value
         rhs = pp_expr(cmd.children[1])
+        return f"{lhs} = {rhs};"
+    elif cmd.data == "array_assignement":
+        lhs = cmd.children[0].value+"["+pp_expr(cmd.children[1])+"]"
+        rhs = pp_expr(cmd.children[2])
         return f"{lhs} = {rhs};"
     elif cmd.data == "printf":
         return f"printf({pp_expr(cmd.children[0])});"
@@ -114,9 +123,12 @@ def var_list(ast):
 
 nb_while = 0
 nb_if = 0
+nb_de = 0
+n_malloc = 0
 
 
 def compile_expr(expr):
+    global nb_de
     if expr.data == "binexpr":
         op = expr.children[1].value
         if (
@@ -137,7 +149,8 @@ def compile_expr(expr):
         if op == "!=":
             return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
         if op == "==":
-            return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx\ncmp rax,0\nje finrax\nmov rax 1\njmp finrax\nfin:mov rax, 0\n"
+            nb_de += 1
+            return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx\ncmp rax,0\nje fin_de{nb_de}\nmov rax,0\njmp fin_de{nb_de}_2\nfin_de{nb_de}:\nmov rax, 1\nfin_de{nb_de}_2:\n"
 
     if expr.data == "parenexpr":
         return compile_expr(expr.children[0])
@@ -147,6 +160,17 @@ def compile_expr(expr):
     if expr.data == "nombre":
         e = expr.children[0].value
         return f"\nmov rax,{e}"
+    if expr.data == "new_array":
+        e = compile_expr(expr.children[0])
+        res = f"{e}\npush rax\npop rbx\nimul rbx,8\nadd rbx,8\nmov rdi, rbx\ncall malloc\nmov [rax], rbx\n"
+        return res
+    if expr.data == "len_array":
+        e = expr.children[0].value
+        return f"mov rax,  [{e}]"
+    if expr.data == "array_access":
+        id = expr.children[0].value
+        e = compile_expr(expr.children[1])
+        return f"{e}\npush rax\nmov rax,  [{id}]\npop rbx\nimul rbx,8\nadd rbx,8\nadd rax,rbx\nmov rax,  [rax]"
 
 
 def compile_cmd(cmd):
@@ -168,6 +192,11 @@ def compile_cmd(cmd):
         e = compile_expr(cmd.children[0])
         b = compile_bloc(cmd.children[1])
         return f"\ndeb_while{nb_while}:\n{e}\ncmp rax,0\njz end_while{nb_while}\n{b}\njmp deb_while{nb_while}\nend_while{nb_while}:"
+    if cmd.data == "array_assignement":
+        lhs = cmd.children[0].value
+        e = compile_expr(cmd.children[1])
+        rhs = compile_expr(cmd.children[2])
+        return f"{e}\npush rax\nmov rax, [{lhs}]\npop rbx\nimul rbx,8\nadd rbx,8\nadd rax,rbx\npush rax\n{rhs}\npop rbx\nmov [rbx],rax"
 
 
 def compile_bloc(bloc):
@@ -189,6 +218,7 @@ def compile_vars(ast):
     for i in range(len(ast.children)):
         s += f"\nmov rbx, [rbp-0x10]\nmov rdi, [rbx+{8*(i+1)}]\ncall atoi\n\
 mov [{ast.children[i].value}], rax\n"
+
     return s
 
 
@@ -215,7 +245,12 @@ program = "".join(open(args.file).readlines())
 #     return(U+X);
 #     }"""
 
-print(pp_prg(grammaire.parse(program)))
-print("\n")
+
+program = "main(a){a=new int[10];return (a);}"
+g = grammaire.parse(program)
+print(g)
+print(compile(g))
+# print(pp_prg(grammaire.parse(program)))
+# print("\n")
 with open("prog.asm", "w") as f:
     f.write(compile(grammaire.parse(program)))
