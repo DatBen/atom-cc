@@ -9,7 +9,7 @@ args = parser.parse_args()
 
 grammaire = lark.Lark(
     """ variables: IDENTIFIANT ("," IDENTIFIANT)*
-    expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr | "new"  "int" "[" expr "]" -> new_array | IDENTIFIANT "[" expr "]" -> array_access | "len(" IDENTIFIANT ")" -> len_array
+    expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr | "new"  "int" "[" expr "]" -> new_array | IDENTIFIANT "[" expr "]" -> array_access | "len(" IDENTIFIANT ")" -> len_array 
     NUMBER : /[0-9]+/
     cmd : IDENTIFIANT "=" expr ";" -> assignement | IDENTIFIANT "[" expr "]" "=" expr ";" -> array_assignement | "while" "("expr")" "{" bloc "}" -> while | "if" "("expr")" "{" bloc "}" -> if | "printf" "("expr")" ";" -> printf | "showarr" "("expr")" ";" -> showarr 
     bloc : (cmd)*
@@ -150,7 +150,6 @@ def pp_expr(expr, values, opti):
         return f"new int[{pp_expr(expr.children[0],values,opti)}]"
     elif expr.data == "len_array":
         return f"len({expr.children[0].value})"
-
     else:
         return expr.data  # not implemented
 
