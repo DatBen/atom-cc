@@ -119,11 +119,11 @@ def compile_expr(expr):
         return res
     if expr.data == "len_array":
         e = expr.children[0].value
-        return f"mov rax, QWORD PTR [{e}]"
+        return f"mov rax,  [{e}]"
     if expr.data == "array_access":
         id = expr.children[0].value
         e = compile_expr(expr.children[1])
-        return f"{e}\npush rax\nmov rax, QWORD PTR [{id}]\npop rbx\nimul rbx,8\nadd rbx,8\nadd rax,rbx\nmov rax, QWORD PTR [rax]"
+        return f"{e}\npush rax\nmov rax,  [{id}]\npop rbx\nimul rbx,8\nadd rbx,8\nadd rax,rbx\nmov rax,  [rax]"
 
 
 def compile_cmd(cmd):
@@ -169,7 +169,7 @@ def compile_prg(prog):
 def compile_vars(ast):
     s = ""
     for i in range(len(ast.children)):
-        s += f"\nmov rbx, [rbp-0x10]\nmov rdi,[rbx-{8*(i)}]\ncall atoi\nmov [{ast.children[i].value}],rax"
+        s += f"\nmov rbx, [rbp-0x10]\nmov rdi,[rbx+{8*(i+1)}]\ncall atoi\nmov [{ast.children[i].value}],rax"
     return s
 
 
@@ -187,7 +187,7 @@ def compile(prg):
 # print(compile_prg(grammaire.parse(program)))
 
 
-program = "main(a,b){a=new int[10];return (len(a));}"
+program = "main(a){a=new int[10];return (a);}"
 g = grammaire.parse(program)
 print(g)
 print(compile(g))
