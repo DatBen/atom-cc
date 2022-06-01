@@ -2,3 +2,4 @@
 !moule.asm
 *.o
 *.out
+main*
