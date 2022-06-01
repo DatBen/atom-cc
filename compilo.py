@@ -387,10 +387,10 @@ def compile(prg, opti=False):
 # print(pp_prg(grammaire.parse(program)))
 # print("\n")
 program = grammaire.parse("".join(open(args.file).readlines()))
-# program = pp_prg(program, True)
-# with open("prog.pac", "w") as f:
-#     f.write(program)
-# program = grammaire.parse(program)
+program = pp_prg(program, True)
+with open("prog.pac", "w") as f:
+    f.write(program)
+program = grammaire.parse(program)
 
 with open("prog.asm", "w") as f:
     f.write(compile(program, True))
