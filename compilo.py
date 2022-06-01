@@ -124,7 +124,7 @@ def pp_expr(expr, values, opti):
             e2 = pp_expr(expr.children[2], values, opti)
             # if str.isdigit(e1) and str.isdigit(e2):
             #     return f"{operation(op,int(e1),int(e2))}"
-            # return f"{e1} {op} {e2}"
+            return f"{e1} {op} {e2}"
         elif expr.data == "variable":
             if values[expr.children[0].value] is not None:
                 return f"{values[expr.children[0].value]}"
@@ -387,7 +387,7 @@ def compile(prg, opti=False):
 # print(pp_prg(grammaire.parse(program)))
 # print("\n")
 program = grammaire.parse("".join(open(args.file).readlines()))
-program = pp_prg(program, True)
+program = pp_prg(program, False)
 with open("prog.pac", "w") as f:
     f.write(program)
 program = grammaire.parse(program)
