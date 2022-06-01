@@ -1,9 +1,12 @@
 main(a)
-{
-    while (a != 8)
-    {
-        a = a - 1;
-        printf(a);
+{   u=1;
+    a=new int[u+25+25];
+    i=0;
+    while(i!=len(a)){
+        a[i]=i;
+        i=i+1;
+
     }
-    return (a);
+    showarr(a);
+    return (0);
 }

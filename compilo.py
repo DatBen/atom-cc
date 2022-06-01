@@ -169,12 +169,12 @@ def pp_cmd(cmd, values, opti):
             + pp_expr(cmd.children[1], values, opti)
             + "]"
         )
-        rhs = pp_expr(cmd.children[2])
+        rhs = pp_expr(cmd.children[2], values, opti)
         return f"{lhs} = {rhs};"
     elif cmd.data == "printf":
-        return f"printf({pp_expr(cmd.children[0]),values,opti});"
+        return f"printf({pp_expr(cmd.children[0],values,opti)});"
     elif cmd.data == "showarr":
-        tab = pp_expr(cmd.children[0],values,opti)
+        tab = pp_expr(cmd.children[0], values, opti)
         return tab+"showarr=0;\nwhile("+tab+"showarr!=len("+tab+")){\nprintf("+tab+"["+tab+"showarr]);\n"+tab+"showarr="+tab+"showarr+1;\n}\n"
 
     elif cmd.data in {"if", "while"}:
@@ -194,7 +194,7 @@ def pp_variables(variables):
     return ",".join(variables.children)
 
 
-def pp_prg(prog, opti):
+def pp_prg(prog, opti=False):
     vars_list = var_list(prog)
 
     dict_assignement = find_assignement(prog, dict.fromkeys(vars_list, 0))
@@ -365,8 +365,6 @@ def compile(prg, opti=False):
 #     }"""
 
 
-
-
 # print(pp_prg(grammaire.parse(program)))
 # print("\n")
 program = grammaire.parse("".join(open(args.file).readlines()))
@@ -374,7 +372,7 @@ program = pp_prg(program)
 program = grammaire.parse(program)
 
 with open("prog.asm", "w") as f:
-    f.write(compile(program))
+    f.write(compile(program, True))
 
 
 print(pp_prg(program))
