@@ -10,13 +10,13 @@ args = parser.parse_args()
 
 grammaire = lark.Lark(
     """ variables: IDENTIFIANT ("," IDENTIFIANT)*
-    expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr | FLOAT"f" -> float
+    expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr | FLOAT"f" -> float | OP expr -> unexpr
     NUMBER : /[0-9]+/
     FLOAT : /[0-9]+\.[0-9]+/
     cmd : IDENTIFIANT "=" expr ";" -> assignement | "while" "("expr")" "{" bloc "}" -> while | "if" "("expr")" "{" bloc "}" -> if | "printf" "("expr")" ";" -> printf
     bloc : (cmd)*
     prog: "main" "(" variables ")" "{" bloc "return" "(" expr ")" ";" "}"
-    OP : "+" | "-" | "*" | ">" | "<" | "==" | "!="
+    OP : "+" | "-" | "*" | ">" | "<" | "==" | "!=" | "/" | "(float)"  | "(int)"
     IDENTIFIANT : /[a-zA-Z][a-zA-Z0-9]*/
     %import common.WS
     %ignore WS
@@ -29,6 +29,10 @@ def pp_expr(expr):
         e2 = pp_expr(expr.children[2])
         op = expr.children[1].value
         return f"({e1} {op} {e2})"
+    if expr.data == "unexpr":
+        e1 = pp_expr(expr.children[1])
+        op = expr.children[0].value
+        return f"({op} {e1})"
     elif expr.data == "parenexpr":
         return f"({pp_expr(expr.children[0])})"
     elif expr.data in {"variable", "nombre"}:
@@ -104,14 +108,31 @@ def compile_expr(expr):
         e1 = compile_expr(expr.children[0])
         e2 = compile_expr(expr.children[2])
         op = expr.children[1].value
+        if expr.children[0].children[0] in floats or expr.children[2].children[0] in floats:
+            if op=="+":
+                return f"{e2}\npush rax\n{e1}\nmovq xmm0, rax\npop rax\nmovq xmm1, rax\naddsd xmm0,xmm1"
+            if op=="-":
+                return f"{e2}\npush rax\n{e1}\nmovq xmm0, rax\npop rax\nmovq xmm1, rax\nsubsd xmm0,xmm1"
+            if op=="*":
+                return f"{e2}\npush rax\n{e1}\nmovq xmm0, rax\npop rax\nmovq xmm1, rax\nmulsd xmm0,xmm1"
+            if op=="/":
+                return f"{e2}\npush rax\n{e1}\nmovq xmm0, rax\npop rax\nmovq xmm1, rax\ndivsd xmm0,xmm1"
+        else :
+            if op=="+":
+                return f"{e2}\npush rax\n{e1}\npop rbx\nadd rax,rbx"
+            if op=="-":
+                return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
+            if op=="*":
+                return f"{e2}\npush rax\n{e1}\npop rbx\nmul rax,rbx"
+            if op=="!=":
+                return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
+    if expr.data == "unexpr":
+        e1 = compile_expr(expr.children[1])
+        op = expr.children[0].value
         if op=="+":
-            return f"{e2}\npush rax\n{e1}\npop rbx\nadd rax,rbx"
-        if op=="-":
-            return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
-        if op=="*":
-            return f"{e2}\npush rax\n{e1}\npop rbx\nmul rax,rbx"
-        if op=="!=":
-            return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
+            return f"{e1}"
+        if op=="(float)":
+            return f"{e1}\ncvtsi2ss xmm0, rax\nunpcklps xmm0, xmm0\ncvtps2pd xmm0, xmm0"
     if expr.data == "parenexpr":
         return compile_expr(expr.children[0])
     if expr.data =="variable":
@@ -138,8 +159,11 @@ def compile_cmd(cmd):
             return f"{rhs}\nmov [{lhs}],rax"
     if cmd.data == "printf":
         rhs=compile_expr(cmd.children[0])
-        if cmd.children[0].children[0].value in floats:
+        if cmd.children[0].children[0].value in floats :
             return f"{rhs}\nmovq xmm0, rax\nmov edi, fmt_float\nmov eax, 1\ncall printf"
+        if cmd.children[0].data=="unexpr":
+            if cmd.children[0].children[0].value =='(float)':
+                return f"{rhs}\nmov edi, fmt_float\nmov eax, 1\ncall printf"
         else:
             return f"{rhs}\nmov rdi,fmt\nmov rsi,rax\nxor rax,rax\ncall printf"
 

@@ -1,9 +1,8 @@
 main(a)
 {
     a = 10;
-    c = 2.0f;
-    b = 10.0f;
-    printf(b);
+    printf(a);
+    printf((float)a);
     while (a != 8)
     {
         a = a - 1;

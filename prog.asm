@@ -4,11 +4,8 @@ section .data
 fmt: db "%d", 10, 0
 fmt_float: db "%f", 10, 0
 
-b: dq 0
-c: dq 0
 a: dq 0
-LC0: dq 10.0
-LC1: dq 2.0
+
 
 section .text
 main:
@@ -25,12 +22,15 @@ mov [a],rax
 
 mov rax,10
 mov [a],rax
-movsd xmm0,[LC1]
-movsd [c],xmm0
-movsd xmm0,[LC0]
-movsd [b],xmm0
-mov rax,[b]
-movq xmm0, rax
+mov rax,[a]
+mov rdi,fmt
+mov rsi,rax
+xor rax,rax
+call printf
+mov rax,[a]
+cvtsi2ss xmm0, rax
+unpcklps xmm0, xmm0
+cvtps2pd xmm0, xmm0
 mov edi, fmt_float
 mov eax, 1
 call printf
