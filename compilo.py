@@ -115,7 +115,7 @@ def compile_expr(expr):
         return f"\nmov rax,{e}"
     if expr.data == "new_array":
         e = compile_expr(expr.children[0])
-        res = f"{e}\npush rax\npop rbx\nmov rdi, rbx*8+8\ncall malloc\nmov [rax], rbx\n"
+        res = f"{e}\npush rax\npop rbx\nimul rbx,8\nadd rbx,8\nmov rdi, rbx\ncall malloc\nmov [rax], rbx\n"
         return res
     if expr.data == "len_array":
         e = expr.children[0].value
@@ -123,7 +123,7 @@ def compile_expr(expr):
     if expr.data == "array_access":
         id = expr.children[0].value
         e = compile_expr(expr.children[1])
-        return f"{e}\npush rax\nmov rax, QWORD PTR [{id}]\npop rbx\nmov rax, QWORD PTR [rax+rbx*8+8]"
+        return f"{e}\npush rax\nmov rax, QWORD PTR [{id}]\npop rbx\nimul rbx,8\nadd rbx,8\nadd rax,rbx\nmov rax, QWORD PTR [rax]"
 
 
 def compile_cmd(cmd):
@@ -149,7 +149,7 @@ def compile_cmd(cmd):
         lhs = cmd.children[0].value
         e = compile_expr(cmd.children[1])
         rhs = compile_expr(cmd.children[2])
-        return f"{e}\npush rax\nmov rax, [{lhs}]\npop rbx\nmov rax, rax+rbx*8+8\npush rax\n{rhs}\npop rbx\nmov [rbx],rax"
+        return f"{e}\npush rax\nmov rax, [{lhs}]\npop rbx\nimul rbx,8\nadd rbx,8\nadd rax,rbx\npush rax\n{rhs}\npop rbx\nmov [rbx],rax"
 
 
 def compile_bloc(bloc):
@@ -187,7 +187,7 @@ def compile(prg):
 # print(compile_prg(grammaire.parse(program)))
 
 
-program = "main(a,b){a=new int[10];b=5;a[2]=b;b=a[3];return (len(a));}"
+program = "main(a,b){a=new int[10];return (len(a));}"
 g = grammaire.parse(program)
 print(g)
 print(compile(g))
