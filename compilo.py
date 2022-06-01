@@ -16,7 +16,7 @@ grammaire = lark.Lark(
     cmd : IDENTIFIANT "=" expr ";" -> assignement | "while" "("expr")" "{" bloc "}" -> while | "if" "("expr")" "{" bloc "}" -> if | "printf" "("expr")" ";" -> printf
     bloc : (cmd)*
     prog: "main" "(" variables ")" "{" bloc "return" "(" expr ")" ";" "}"
-    OP : "+" | "-" | "*" | ">" | "<" | "==" | "!=" | "/" | "(float)"  | "(int)"
+    OP : "+" | "-" | "*" | ">" | "<" | "==" | "!=" | "/" | "(float)"  
     IDENTIFIANT : /[a-zA-Z][a-zA-Z0-9]*/
     %import common.WS
     %ignore WS
@@ -132,7 +132,7 @@ def compile_expr(expr):
         if op=="+":
             return f"{e1}"
         if op=="(float)":
-            return f"{e1}\ncvtsi2ss xmm0, rax\nunpcklps xmm0, xmm0\ncvtps2pd xmm0, xmm0"
+            return f"{e1}\ncvtsi2ss xmm0, rax\nunpcklps xmm0, xmm0\ncvtps2pd xmm0, xmm0\nmovq rax, xmm0"    
     if expr.data == "parenexpr":
         return compile_expr(expr.children[0])
     if expr.data =="variable":
@@ -159,7 +159,7 @@ def compile_cmd(cmd):
             return f"{rhs}\nmov [{lhs}],rax"
     if cmd.data == "printf":
         rhs=compile_expr(cmd.children[0])
-        if cmd.children[0].children[0].value in floats :
+        if (cmd.children[0].data=="variable") and cmd.children[0].children[0].value in floats :
             return f"{rhs}\nmovq xmm0, rax\nmov edi, fmt_float\nmov eax, 1\ncall printf"
         if cmd.children[0].data=="unexpr":
             if cmd.children[0].children[0].value =='(float)':

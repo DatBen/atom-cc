@@ -1,11 +1,15 @@
 main(a)
 {
-    a = 10;
-    printf(a);
-    printf((float)a);
-    while (a != 8)
-    {
-        a = a - 1;
-    }
-    return (a);
+    x=10.0f;
+    y=50.0f;
+    x=x*x;
+    printf(x);
+    z=x-y;
+
+    a=1;
+    b=2;
+    c=a+b;
+    printf(a+b);
+    printf((float) 5);
+    return(x);
 }
