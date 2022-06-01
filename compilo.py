@@ -141,11 +141,13 @@ def pp_expr(expr, values, opti):
     if expr.data == "nombre":
         return f"{expr.children[0].value}"
     elif expr.data == "parenexpr":
-        return f"({pp_expr(expr.children[0])})"
+        return f"({pp_expr(expr.children[0],values,opti)})"
     elif expr.data == "array_access":
-        return f"{expr.children[0].value}[{pp_expr(expr.children[1])}]"
+        return (
+            f"{expr.children[0].value}[{pp_expr(expr.children[1],values,opti)}]"
+        )
     elif expr.data == "new_array":
-        return f"new int[{pp_expr(expr.children[0])}]"
+        return f"new int[{pp_expr(expr.children[0],values,opti)}]"
     elif expr.data == "len_array":
         return f"len({expr.children[0].value})"
 
@@ -161,7 +163,12 @@ def pp_cmd(cmd, values, opti):
         rhs = pp_expr(cmd.children[1], values, opti)
         return f"{lhs} = {rhs};"
     elif cmd.data == "array_assignement":
-        lhs = cmd.children[0].value + "[" + pp_expr(cmd.children[1]) + "]"
+        lhs = (
+            cmd.children[0].value
+            + "["
+            + pp_expr(cmd.children[1], values, opti)
+            + "]"
+        )
         rhs = pp_expr(cmd.children[2])
         return f"{lhs} = {rhs};"
     elif cmd.data == "printf":
@@ -264,7 +271,7 @@ def compile_expr(expr, values, opti):
         e = f"{expr.children[0].value}"
         return f"\nmov rax,{e}"
     if expr.data == "new_array":
-        e = compile_expr(expr.children[0])
+        e = compile_expr(expr.children[0], values, opti)
         res = f"{e}\npush rax\npop rbx\nimul rbx,8\nadd rbx,8\nmov rdi, rbx\ncall malloc\npush rax\n{e}\npop rbx\npush rax\nmov rax,rbx\npop rbx\nmov [rax], rbx\n"
         return res
     if expr.data == "len_array":
@@ -272,7 +279,7 @@ def compile_expr(expr, values, opti):
         return f"\nmov rax,  [{e}]\nmov rax,[rax]"
     if expr.data == "array_access":
         id = expr.children[0].value
-        e = compile_expr(expr.children[1])
+        e = compile_expr(expr.children[1], values, opti)
         return f"{e}\npush rax\nmov rax,  [{id}]\npop rbx\nimul rbx,8\nadd rbx,8\nadd rax,rbx\nmov rax,  [rax]"
 
 
@@ -299,8 +306,8 @@ def compile_cmd(cmd, values, opti):
         return f"\ndeb_while{nb_while}:\n{e}\ncmp rax,0\njz end_while{nb_while}\n{b}\njmp deb_while{nb_while}\nend_while{nb_while}:"
     if cmd.data == "array_assignement":
         lhs = cmd.children[0].value
-        e = compile_expr(cmd.children[1])
-        rhs = compile_expr(cmd.children[2])
+        e = compile_expr(cmd.children[1], values, opti)
+        rhs = compile_expr(cmd.children[2], values, opti)
         return f"{e}\npush rax\nmov rax, [{lhs}]\npop rbx\nimul rbx,8\nadd rbx,8\nadd rax,rbx\npush rax\n{rhs}\npop rbx\nmov [rbx],rax"
 
 
