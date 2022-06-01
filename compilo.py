@@ -369,6 +369,8 @@ def compile(prg, opti=False):
 # print("\n")
 program = grammaire.parse("".join(open(args.file).readlines()))
 program = pp_prg(program)
+with open("prog.pac", "w") as f:
+    f.write(program)
 program = grammaire.parse(program)
 
 with open("prog.asm", "w") as f:
