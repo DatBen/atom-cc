@@ -1,5 +1,3 @@
-from curses.ascii import isdigit
-from shutil import ExecError
 import lark
 import argparse
 
