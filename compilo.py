@@ -1,3 +1,4 @@
+from dataclasses import replace
 import lark
 import argparse
 
@@ -45,7 +46,7 @@ def find_assignement(prg, rep):
 def find_values(prg, rep, values):
 
     if prg.data == "assignement" and rep[prg.children[0]] < 2:
-        flag, res = rec_isImmediat(prg.children[1])
+        flag, res = rec_isImmediat(prg.children[1], values)
         if flag:
             values[prg.children[0]] = res
         # if isImmediat(prg.children[1]):
@@ -73,18 +74,20 @@ def isImmediat(expr):
     )
 
 
-def rec_isImmediat(expr):
+def rec_isImmediat(expr, values):
     if expr.data == "nombre":
         return True, int(expr.children[0].value)
+    if expr.data == "variable" and values[expr.children[0].value] is not None:
+        return True, int(values[expr.children[0].value])
     elif expr.data == "binexpr":
-        flag1, res1 = rec_isImmediat(expr.children[0])
-        flag2, res2 = rec_isImmediat(expr.children[2])
+        flag1, res1 = rec_isImmediat(expr.children[0], values)
+        flag2, res2 = rec_isImmediat(expr.children[2], values)
         if flag1 and flag2:
             return True, operation(expr.children[1].value, res1, res2)
         else:
             return False, None
     elif expr.data == "parenexpr":
-        return rec_isImmediat(expr.children[0])
+        return rec_isImmediat(expr.children[0], values)
     else:
         return False, None
 
@@ -112,16 +115,16 @@ def operation(op, nb1, nb2):
 
 def pp_expr(expr, values, opti):
     if opti:
-        flag, res = rec_isImmediat(expr)
+        flag, res = rec_isImmediat(expr, values)
         if flag:
             return f"{res}"
         elif expr.data == "binexpr":
             op = expr.children[1].value
             e1 = pp_expr(expr.children[0], values, opti)
             e2 = pp_expr(expr.children[2], values, opti)
-            if str.isdigit(e1) and str.isdigit(e2):
-                return f"{operation(op,int(e1),int(e2))}"
-            return f"{e1} {op} {e2}"
+            # if str.isdigit(e1) and str.isdigit(e2):
+            #     return f"{operation(op,int(e1),int(e2))}"
+            # return f"{e1} {op} {e2}"
         elif expr.data == "variable":
             if values[expr.children[0].value] is not None:
                 return f"{values[expr.children[0].value]}"
@@ -175,7 +178,22 @@ def pp_cmd(cmd, values, opti):
         return f"printf({pp_expr(cmd.children[0],values,opti)});"
     elif cmd.data == "showarr":
         tab = pp_expr(cmd.children[0], values, opti)
-        return tab+"showarr=0;\nwhile("+tab+"showarr!=len("+tab+")){\nprintf("+tab+"["+tab+"showarr]);\n"+tab+"showarr="+tab+"showarr+1;\n}\n"
+        return (
+            tab
+            + "showarr=0;\nwhile("
+            + tab
+            + "showarr!=len("
+            + tab
+            + ")){\nprintf("
+            + tab
+            + "["
+            + tab
+            + "showarr]);\n"
+            + tab
+            + "showarr="
+            + tab
+            + "showarr+1;\n}\n"
+        )
 
     elif cmd.data in {"if", "while"}:
         e = pp_expr(cmd.children[0], values, opti)
@@ -241,16 +259,17 @@ def comp_op(op, e1, e2):
 
 def compile_expr(expr, values, opti):
     if opti:
-        flag, res = rec_isImmediat(expr)
+        flag, res = rec_isImmediat(expr, values)
         if flag:
             return f"\nmov rax, {res}"
         elif expr.data == "binexpr":
             op = expr.children[1].value
             e1 = compile_expr(expr.children[0], values, opti)
             e2 = compile_expr(expr.children[2], values, opti)
-            if str.isdigit(e1) and str.isdigit(e2):
-
-                return f"{operation(op,int(e1),int(e2))}"
+            # print("bko")
+            # if str.isdigit(e1) and str.isdigit(e2):
+            #     print("gfd")
+            #     return f"{operation(op,int(e1),int(e2))}"
             return comp_op(op, e1, e2)
         if expr.data == "variable":
             if values[expr.children[0].value] is not None:
@@ -368,10 +387,10 @@ def compile(prg, opti=False):
 # print(pp_prg(grammaire.parse(program)))
 # print("\n")
 program = grammaire.parse("".join(open(args.file).readlines()))
-program = pp_prg(program)
-with open("prog.pac", "w") as f:
-    f.write(program)
-program = grammaire.parse(program)
+# program = pp_prg(program, True)
+# with open("prog.pac", "w") as f:
+#     f.write(program)
+# program = grammaire.parse(program)
 
 with open("prog.asm", "w") as f:
     f.write(compile(program, True))
