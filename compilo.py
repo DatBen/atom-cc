@@ -1,4 +1,5 @@
 from curses.ascii import isdigit
+from shutil import ExecError
 import lark
 import argparse
 
@@ -111,68 +112,75 @@ def operation(op, nb1, nb2):
         raise Exception("Not Implemented")
 
 
-def pp_expr(expr, values):
-    flag, res = rec_isImmediat(expr)
-    if flag:
-        return f"{res}"
-    elif expr.data == "binexpr":
-        op = expr.children[1].value
-        e1 = pp_expr(expr.children[0], values)
-        e2 = pp_expr(expr.children[2], values)
-        if str.isdigit(e1) and str.isdigit(e2):
-            return f"{operation(op,int(e1),int(e2))}"
-        return f"{e1} {op} {e2}"
+def pp_expr(expr, values, opti):
+    if opti:
+        flag, res = rec_isImmediat(expr)
+        if flag:
+            return f"{res}"
+        elif expr.data == "binexpr":
+            op = expr.children[1].value
+            e1 = pp_expr(expr.children[0], values, opti)
+            e2 = pp_expr(expr.children[2], values, opti)
+            if str.isdigit(e1) and str.isdigit(e2):
+                return f"{operation(op,int(e1),int(e2))}"
+            return f"{e1} {op} {e2}"
+        # elif expr.data == "parenexpr":
+        #     return f"({pp_expr(expr.children[0],values,opti)})"
+        # elif expr.data == "nombre":
+        #     return f"{expr.children[0].value}"
+        elif expr.data == "variable":
+            if values[expr.children[0].value] is not None:
+                return f"{values[expr.children[0].value]}"
+            else:
+                return f"{expr.children[0].value}"
+        # else:
+        #     return expr.data  # not implemented
+    else:
 
-    # if expr.data == "binexpr":
-    #     op = expr.children[1].value
-    #     if rec_isImmediat(expr):
-    #         e1 = int(expr.children[0].children[0].value)
-    #         e2 = int(expr.children[2].children[0].value)
-    #         return f"{operation(op,e1,e2)}"
+        if expr.data == "binexpr":
+            op = expr.children[1].value
+            e1 = pp_expr(expr.children[0], values, opti)
+            e2 = pp_expr(expr.children[2], values, opti)
 
-    #     e1 = pp_expr(expr.children[0], values)
-    #     e2 = pp_expr(expr.children[2], values)
-
-    #     return f"({e1} {op} {e2})"
-    elif expr.data == "parenexpr":
-        return f"({pp_expr(expr.children[0],values)})"
+            return f"{e1} {op} {e2}"
+        elif expr.data == "variable":
+            return f"{expr.children[0].value}"
+    if expr.data == "parenexpr":
+        return f"({pp_expr(expr.children[0],values,opti)})"
     elif expr.data == "nombre":
         return f"{expr.children[0].value}"
-    elif expr.data == "variable":
-        if values[expr.children[0].value] is not None:
-            return f"{values[expr.children[0].value]}"
-        else:
-            return f"{expr.children[0].value}"
 
     else:
         return expr.data  # not implemented
 
 
-def pp_cmd(cmd, values):
+def pp_cmd(cmd, values, opti):
     if cmd.data == "assignement":
+        if values[cmd.children[0].value] is not None and opti:
+            return ""
         lhs = cmd.children[0].value
-        rhs = pp_expr(cmd.children[1], values)
+        rhs = pp_expr(cmd.children[1], values, opti)
         return f"{lhs} = {rhs};"
     elif cmd.data == "printf":
-        return f"printf({pp_expr(cmd.children[0]),values});"
+        return f"printf({pp_expr(cmd.children[0],values,opti)});"
     elif cmd.data in {"if", "while"}:
-        e = pp_expr(cmd.children[0], values)
-        b = pp_bloc(cmd.children[1])
+        e = pp_expr(cmd.children[0], values, opti)
+        b = pp_bloc(cmd.children[1], values, opti)
         return f"{cmd.data}({e}){{\n {b} }}"
 
     else:
         raise NotImplementedError(cmd.data)
 
 
-def pp_bloc(bloc, values):
-    return "\n ".join(pp_cmd(cmd, values) for cmd in bloc.children)
+def pp_bloc(bloc, values, opti):
+    return "\n ".join(pp_cmd(cmd, values, opti) for cmd in bloc.children)
 
 
 def pp_variables(variables):
     return ",".join(variables.children)
 
 
-def pp_prg(prog):
+def pp_prg(prog, opti):
     vars_list = var_list(prog)
 
     dict_assignement = find_assignement(prog, dict.fromkeys(vars_list, 0))
@@ -180,8 +188,8 @@ def pp_prg(prog):
         prog, dict_assignement, dict.fromkeys(vars_list, None)
     )
     vars = pp_variables(prog.children[0])
-    bloc = pp_bloc(prog.children[1], dict_values)
-    ret = pp_expr(prog.children[2], dict_values)
+    bloc = pp_bloc(prog.children[1], dict_values, opti)
+    ret = pp_expr(prog.children[2], dict_values, opti)
     return f"main ({vars}) {{\n {bloc} \n return({ret});\n}}"
 
 
@@ -214,19 +222,24 @@ def comp_op(op, e1, e2):
         return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx\ncmp rax,0\nje finrax\nmov rax 1\njmp finrax\nfin:mov rax, 0\n"
 
 
-def compile_expr(expr, values):
-    flag, res = rec_isImmediat(expr)
-    if flag:
-        return f"\nmov rax, {res}"
-    elif expr.data == "binexpr":
-        op = expr.children[1].value
-        e1 = compile_expr(expr.children[0], values)
-        e2 = compile_expr(expr.children[2], values)
-        if str.isdigit(e1) and str.isdigit(e2):
+def compile_expr(expr, values, opti):
+    if opti:
+        flag, res = rec_isImmediat(expr)
+        if flag:
+            return f"\nmov rax, {res}"
+        elif expr.data == "binexpr":
+            op = expr.children[1].value
+            e1 = compile_expr(expr.children[0], values, opti)
+            e2 = compile_expr(expr.children[2], values, opti)
+            if str.isdigit(e1) and str.isdigit(e2):
 
-            return f"{operation(op,int(e1),int(e2))}"
-
-        return comp_op(op, e1, e2)
+                return f"{operation(op,int(e1),int(e2))}"
+            return comp_op(op, e1, e2)
+        if expr.data == "variable":
+            if values[expr.children[0].value] is not None:
+                return f"\nmov rax, {values[expr.children[0].value]}"
+            else:
+                return f"\nmov rax,[{expr.children[0].value}]"
         # if expr.data == "binexpr":
         # op = expr.children[1].value
         # if (
@@ -249,47 +262,55 @@ def compile_expr(expr, values):
         #     return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx"
         # if op == "==":
         #     return f"{e2}\npush rax\n{e1}\npop rbx\nsub rax,rbx\ncmp rax,0\nje finrax\nmov rax 1\njmp finrax\nfin:mov rax, 0\n"
+    else:
+        if expr.data == "binexpr":
+            op = expr.children[1].value
+            e1 = compile_expr(expr.children[0], values, opti)
+            e2 = compile_expr(expr.children[2], values, opti)
+            return comp_op(op, e1, e2)
+        if expr.data == "variable":
+            return f"\nmov rax,[{expr.children[0].value}]"
 
     if expr.data == "parenexpr":
-        return compile_expr(expr.children[0], values)
+        return compile_expr(expr.children[0], values, opti)
     if expr.data == "variable":
-        if values[expr.children[0].value] is not None:
-            return f"\nmov rax, {values[expr.children[0].value]}"
-        else:
-            return f"\nmov rax,[{expr.children[0].value}]"
+
+        return f"\nmov rax,[{expr.children[0].value}]"
 
     if expr.data == "nombre":
         e = f"{expr.children[0].value}"
         return f"\nmov rax,{e}"
+    else:
+        return Exception("Not Implemented")
 
 
-def compile_cmd(cmd, values):
+def compile_cmd(cmd, values, opti):
     global nb_while
     global nb_if
     if cmd.data == "assignement":
-        if values[cmd.children[0].value] is not None:
+        if values[cmd.children[0].value] is not None and opti:
             return ""
         lhs = cmd.children[0].value
-        rhs = compile_expr(cmd.children[1], values)
+        rhs = compile_expr(cmd.children[1], values, opti)
         return f"{rhs}\nmov [{lhs}],rax"
     if cmd.data == "printf":
-        return f"{compile_expr(cmd.children[0],values)}\nmov rdi,fmt\nmov rsi,rax\nxor rax,rax\ncall printf"
+        return f"{compile_expr(cmd.children[0],values,opti)}\nmov rdi,fmt\nmov rsi,rax\nxor rax,rax\ncall printf"
     if cmd.data == "if":
         nb_if += 1
-        e = compile_expr(cmd.children[0], values)
-        b = compile_bloc(cmd.children[1], values)
+        e = compile_expr(cmd.children[0], values, opti)
+        b = compile_bloc(cmd.children[1], values, opti)
         return f"{e}\ncmp rax,0\njz end_if{nb_if}\n{b}\nend_if{nb_if}:"
     if cmd.data == "while":
         nb_while += 1
-        e = compile_expr(cmd.children[0], values)
-        b = compile_bloc(cmd.children[1], values)
+        e = compile_expr(cmd.children[0], values, opti)
+        b = compile_bloc(cmd.children[1], values, opti)
         return f"\ndeb_while{nb_while}:\n{e}\ncmp rax,0\njz end_while{nb_while}\n{b}\njmp deb_while{nb_while}\nend_while{nb_while}:"
 
 
-def compile_bloc(bloc, values):
+def compile_bloc(bloc, values, opti):
     res = ""
     for cmd in bloc.children:
-        res += compile_cmd(cmd, values)
+        res += compile_cmd(cmd, values, opti)
     return res
 
 
@@ -301,7 +322,7 @@ mov [{ast.children[i].value}], rax\n"
     return s
 
 
-def compile(prg):
+def compile(prg, opti=False):
     vars_list = var_list(prg)
 
     dict_assignement = find_assignement(prg, dict.fromkeys(vars_list, 0))
@@ -314,9 +335,11 @@ def compile(prg):
         vars_decl = "\n".join([f"{x}: dq 0" for x in var_list(prg)])
         code = code.replace("VAR_DECL", vars_decl)
         code = code.replace(
-            "RETURN", compile_expr(prg.children[2], dict_values)
+            "RETURN", compile_expr(prg.children[2], dict_values, opti)
         )
-        code = code.replace("BODY", compile_bloc(prg.children[1], dict_values))
+        code = code.replace(
+            "BODY", compile_bloc(prg.children[1], dict_values, opti)
+        )
         code = code.replace("VAR_INIT", compile_vars(prg.children[0]))
         return code
 
@@ -324,15 +347,21 @@ def compile(prg):
 # program = "".join(open(args.file).readlines())
 program = """main(X,Y){
 
-    U=(5*(4+2));
+    U=(10*(4+2));
     C=(U*X)+5;
-    if (C!=63) {
+    if (C!=65) {
+    printf(C);
     C=3;
     }
     return(C);
     }"""
 
-print(compile(grammaire.parse(program)))
+program2 = """main(a,b){
+    return(a);
+    }"""
+
+# print(pp_prg(grammaire.parse(program), False))
+print(compile(grammaire.parse(program), True))
 # print(pp_prg(grammaire.parse(program)))
 # print(grammaire.parse(program).children[1].children)
 # print("\n")
