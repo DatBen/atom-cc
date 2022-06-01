@@ -162,11 +162,11 @@ def compile_expr(expr):
         return f"\nmov rax,{e}"
     if expr.data == "new_array":
         e = compile_expr(expr.children[0])
-        res = f"{e}\npush rax\npop rbx\nimul rbx,8\nadd rbx,8\nmov rdi, rbx\ncall malloc\nmov [rax], rbx\n"
+        res = f"{e}\npush rax\npop rbx\nimul rbx,8\nadd rbx,8\nmov rdi, rbx\ncall malloc\npush rax\n{e}\npop rbx\npush rax\nmov rax,rbx\npop rbx\nmov [rax], rbx\n"
         return res
     if expr.data == "len_array":
         e = expr.children[0].value
-        return f"mov rax,  [{e}]"
+        return f"\nmov rax,  [{e}]\nmov rax,[rax]"
     if expr.data == "array_access":
         id = expr.children[0].value
         e = compile_expr(expr.children[1])
@@ -246,7 +246,7 @@ program = "".join(open(args.file).readlines())
 #     }"""
 
 
-program = "main(a){a=new int[10];return (a);}"
+program = "main(a,b){a=new int[10];printf(len(a));a[0]=2;return (len(a));}"
 g = grammaire.parse(program)
 print(g)
 print(compile(g))
