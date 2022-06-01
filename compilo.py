@@ -134,12 +134,12 @@ def pp_expr(expr, values, opti):
             e1 = pp_expr(expr.children[0], values, opti)
             e2 = pp_expr(expr.children[2], values, opti)
             return f"{e1} {op} {e2}"
-          
+
         elif expr.data == "variable":
             return f"{expr.children[0].value}"
-    
-    elif expr.data == "nombre":
-        return f"{expr.children[0].value}"  
+
+    if expr.data == "nombre":
+        return f"{expr.children[0].value}"
     elif expr.data == "parenexpr":
         return f"({pp_expr(expr.children[0])})"
     elif expr.data == "array_access":
@@ -161,7 +161,7 @@ def pp_cmd(cmd, values, opti):
         rhs = pp_expr(cmd.children[1], values, opti)
         return f"{lhs} = {rhs};"
     elif cmd.data == "array_assignement":
-        lhs = cmd.children[0].value+"["+pp_expr(cmd.children[1])+"]"
+        lhs = cmd.children[0].value + "[" + pp_expr(cmd.children[1]) + "]"
         rhs = pp_expr(cmd.children[2])
         return f"{lhs} = {rhs};"
     elif cmd.data == "printf":
@@ -211,7 +211,6 @@ def var_list(ast):
 nb_while = 0
 nb_if = 0
 nb_de = 0
-
 
 
 def comp_op(op, e1, e2):
@@ -275,7 +274,6 @@ def compile_expr(expr, values, opti):
         id = expr.children[0].value
         e = compile_expr(expr.children[1])
         return f"{e}\npush rax\nmov rax,  [{id}]\npop rbx\nimul rbx,8\nadd rbx,8\nadd rax,rbx\nmov rax,  [rax]"
-
 
 
 def compile_cmd(cmd, values, opti):
@@ -344,7 +342,6 @@ def compile(prg, opti=False):
         return code
 
 
-
 # print(compile_prg(grammaire.parse(program)))
 
 program = "".join(open(args.file).readlines())
@@ -365,4 +362,3 @@ print(compile(g))
 # print("\n")
 with open("prog.asm", "w") as f:
     f.write(compile(grammaire.parse(program)))
-
