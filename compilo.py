@@ -361,10 +361,9 @@ program = "".join(open(args.file).readlines())
 #     }"""
 
 
-program = "main(a,b){a=new int[10];printf(len(a));a[0]=2;return (len(a));}"
+# program = "main(a,b){a=new int[10];printf(len(a));a[0]=2;return (len(a));}"
 g = grammaire.parse(program)
-print(g)
-print(compile(g))
+
 # print(pp_prg(grammaire.parse(program)))
 # print("\n")
 with open("prog.asm", "w") as f:
