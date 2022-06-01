@@ -11,7 +11,7 @@ grammaire = lark.Lark(
     """ variables: IDENTIFIANT ("," IDENTIFIANT)*
     expr: IDENTIFIANT -> variable | NUMBER -> nombre | expr OP expr -> binexpr | "("expr")" -> parenexpr | "new"  "int" "[" expr "]" -> new_array | IDENTIFIANT "[" expr "]" -> array_access | "len(" IDENTIFIANT ")" -> len_array
     NUMBER : /[0-9]+/
-    cmd : IDENTIFIANT "=" expr ";" -> assignement | IDENTIFIANT "[" expr "]" "=" expr ";" -> array_assignement | "while" "("expr")" "{" bloc "}" -> while | "if" "("expr")" "{" bloc "}" -> if | "printf" "("expr")" ";" -> printf | "showarr" "("expr")" ";" -> showarr
+    cmd : IDENTIFIANT "=" expr ";" -> assignement | IDENTIFIANT "[" expr "]" "=" expr ";" -> array_assignement | "while" "("expr")" "{" bloc "}" -> while | "if" "("expr")" "{" bloc "}" -> if | "printf" "("expr")" ";" -> printf | "showarr" "("expr")" ";" -> showarr 
     bloc : (cmd)*
     prog: "main" "(" variables ")" "{" bloc "return" "(" expr ")" ";" "}"
     OP : "+" | "-" | "*" | ">" | "<" | "==" | "!="
@@ -173,14 +173,15 @@ def pp_cmd(cmd, values, opti):
         return f"{lhs} = {rhs};"
     elif cmd.data == "printf":
         return f"printf({pp_expr(cmd.children[0],values,opti)});"
-    elif cmd.data == "showarr":
-        tab = pp_expr(cmd.children[0], values, opti)
-        return tab+"showarr=0;\nwhile("+tab+"showarr!=len("+tab+")){\nprintf("+tab+"["+tab+"showarr]);\n"+tab+"showarr="+tab+"showarr+1;\n}\n"
 
     elif cmd.data in {"if", "while"}:
         e = pp_expr(cmd.children[0], values, opti)
         b = pp_bloc(cmd.children[1], values, opti)
         return f"{cmd.data}({e}){{\n {b} }}"
+
+    elif cmd.data == "showarr":
+        tab = pp_expr(cmd.children[0], values, opti)
+        return tab+"showarr=0;\nwhile("+tab+"showarr!=len("+tab+")){\nprintf("+tab+"["+tab+"showarr]);\n"+tab+"showarr="+tab+"showarr+1;\n}\n"
 
     else:
         raise NotImplementedError(cmd.data)
