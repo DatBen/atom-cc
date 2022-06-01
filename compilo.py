@@ -123,7 +123,7 @@ def compile_expr(expr):
     if expr.data == "float":
         e=expr.children[0].value
         return f"\nmovsd xmm0,[{float_dict[e]}]"
-        
+floats=[]  
 def compile_cmd(cmd):
     global nb_while
     global nb_if
@@ -131,14 +131,15 @@ def compile_cmd(cmd):
         lhs = cmd.children[0].value
         rhs = compile_expr(cmd.children[1])
         if "xmm0" in rhs:
-            print("ok")
+            if lhs not in floats:
+                floats.append(lhs)
             return f"{rhs}\nmovsd [{lhs}],xmm0"
         else:
             return f"{rhs}\nmov [{lhs}],rax"
     if cmd.data == "printf":
         rhs=compile_expr(cmd.children[0])
-        if "xmm0" in rhs:
-            return f"{rhs}\nmov rdi,fmt_float\nmov rsi,rax\nxor rax,rax\ncall printf"
+        if cmd.children[0].children[0].value in floats:
+            return f"{rhs}\nmovq xmm0, rax\nmov edi, fmt_float\nmov eax, 1\ncall printf"
         else:
             return f"{rhs}\nmov rdi,fmt\nmov rsi,rax\nxor rax,rax\ncall printf"
 
@@ -199,7 +200,6 @@ i=0
 for f in float_list(program):
     float_dict[f]="LC"+str(i)
     i+=1
-
 
 
 

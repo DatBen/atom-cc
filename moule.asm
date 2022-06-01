@@ -2,7 +2,7 @@ extern printf, atoi
 global main
 section .data
 fmt: db "%d", 10, 0
-fmt_float: db "%lf", 10, 0
+fmt_float: db "%f", 10, 0
 
 VAR_DECL
 FLOAT_DECL
