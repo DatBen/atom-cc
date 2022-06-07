@@ -1,6 +1,11 @@
 main(a)
 {   u=1;
     a=new float[2];
-    showarr(a);
+    a[0]=1.0f;
+    a[1]=2.0f;
+    b=0.0f;
+    b=a[1];
+    printf(b);
+
     return (0);
 }

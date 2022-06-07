@@ -205,7 +205,6 @@ def compile_cmd(cmd):
     global nb_while
     global nb_if
     if cmd.data == "assignement":
-        print(cmd.children[1])
 
         lhs = cmd.children[0].value
         rhs = compile_expr(cmd.children[1])
@@ -309,6 +308,4 @@ print(pp_prg(program))
 print("\n")
 with open("build/prog.asm", "w") as f:
     f.write(compile(program))
-
-print(floats)
 
