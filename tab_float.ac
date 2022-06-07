@@ -1,0 +1,6 @@
+main(a)
+{   u=1;
+    a=new float[2];
+    showarr(a);
+    return (0);
+}
