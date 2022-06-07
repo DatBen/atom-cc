@@ -1,4 +1,3 @@
-from dataclasses import replace
 import lark
 import argparse
 
@@ -77,7 +76,7 @@ def isImmediat(expr):
 def rec_isImmediat(expr, values):
     if expr.data == "nombre":
         return True, int(expr.children[0].value)
-    if expr.data == "variable" and values[expr.children[0].value] is not None:
+    elif expr.data == "variable" and values[expr.children[0].value] is not None:
         return True, int(values[expr.children[0].value])
     elif expr.data == "binexpr":
         flag1, res1 = rec_isImmediat(expr.children[0], values)
@@ -195,7 +194,20 @@ def pp_cmd(cmd, values, opti):
             + "showarr+1;\n}\n"
         )
 
-    elif cmd.data in {"if", "while"}:
+    elif cmd.data == "if":
+
+        e = pp_expr(cmd.children[0], values, opti)
+        if e == "0":
+            return ""
+        elif str.isdigit(e) and int(e) != 0:
+
+            b = pp_bloc(cmd.children[1], values, opti)
+            return f"{b}"
+        else:
+            b = pp_bloc(cmd.children[1], values, opti)
+            return f"{cmd.data}({e}){{\n {b} }}"
+
+    elif cmd.data == "while":
         e = pp_expr(cmd.children[0], values, opti)
         b = pp_bloc(cmd.children[1], values, opti)
         return f"{cmd.data}({e}){{\n {b} }}"
@@ -219,6 +231,7 @@ def pp_prg(prog, opti=False):
     dict_values = find_values(
         prog, dict_assignement, dict.fromkeys(vars_list, None)
     )
+
     vars = pp_variables(prog.children[0])
     bloc = pp_bloc(prog.children[1], dict_values, opti)
     ret = pp_expr(prog.children[2], dict_values, opti)
@@ -266,10 +279,6 @@ def compile_expr(expr, values, opti):
             op = expr.children[1].value
             e1 = compile_expr(expr.children[0], values, opti)
             e2 = compile_expr(expr.children[2], values, opti)
-            # print("bko")
-            # if str.isdigit(e1) and str.isdigit(e2):
-            #     print("gfd")
-            #     return f"{operation(op,int(e1),int(e2))}"
             return comp_op(op, e1, e2)
         if expr.data == "variable":
             if values[expr.children[0].value] is not None:
@@ -317,10 +326,12 @@ def compile_cmd(cmd, values, opti):
         return f"{rhs}\nmov [{lhs}],rax"
     if cmd.data == "printf":
         return f"{compile_expr(cmd.children[0],values,opti)}\nmov rdi,fmt\nmov rsi,rax\nxor rax,rax\ncall printf"
+
     if cmd.data == "if":
-        nb_if += 1
+
         e = compile_expr(cmd.children[0], values, opti)
         b = compile_bloc(cmd.children[1], values, opti)
+        nb_if += 1
         return f"{e}\ncmp rax,0\njz end_if{nb_if}\n{b}\nend_if{nb_if}:"
     if cmd.data == "while":
         nb_while += 1
@@ -386,6 +397,8 @@ def compile(prg, opti=False):
 
 # print(pp_prg(grammaire.parse(program)))
 # print("\n")
+
+
 program = grammaire.parse("".join(open(args.file).readlines()))
 program = pp_prg(program, False)
 with open("prog.pac", "w") as f:
