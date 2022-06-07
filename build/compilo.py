@@ -228,11 +228,13 @@ def compile_cmd(cmd):
         e = compile_expr(cmd.children[0])
         b = compile_bloc(cmd.children[1])
         return f"{e}\ncmp rax,0\njz end_if{nb_if}\n{b}\nend_if{nb_if}:"
+
     if cmd.data == "while":
         nb_while += 1
         e = compile_expr(cmd.children[0])
         b = compile_bloc(cmd.children[1])
         return f"\ndeb_while{nb_while}:\n{e}\ncmp rax,0\njz end_while{nb_while}\n{b}\njmp deb_while{nb_while}\nend_while{nb_while}:"
+
     if cmd.data == "array_assignement":
         lhs = cmd.children[0].value
         e = compile_expr(cmd.children[1])
@@ -279,6 +281,8 @@ def compile(prg):
 
 
 program = "".join(open(args.file).readlines())
+program = grammaire.parse(program)
+program = pp_prg(program)
 program = grammaire.parse(program)
 
 float_dict = {}
