@@ -2,14 +2,13 @@ main(a)
 {
     x=10.0f;
     y=50.0f;
-    x=x*x;
+    x=x*y;
     printf(x);
-    z=x-y;
-
     a=1;
     b=2;
-    c=a+b;
     printf(a+b);
-    printf((float) 5);
+    c=(float) a;
+    c=c+y;
+    printf(c);
     return(x);
 }

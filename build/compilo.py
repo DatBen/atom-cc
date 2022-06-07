@@ -5,6 +5,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Compile a program")
 parser.add_argument("--file", help="the file to compile")
+parser.add_argument("--moule", help="moule")
 args = parser.parse_args()
 
 
@@ -202,7 +203,7 @@ def compile_vars(ast):
 
 
 def compile(prg):
-    with open("moule.asm") as f:
+    with open(args.moule) as f:
         code = f.read()
         vars_decl="\n".join([f"{x}: dq 0" for x in var_list(prg)])
         float_decl="\n".join([f"{float_dict[key]}: dq {key}" for key in float_dict])
@@ -229,5 +230,5 @@ for f in float_list(program):
 
 print(pp_prg(program))
 print("\n")
-with open("prog.asm","w") as f:
+with open("build/prog.asm","w") as f:
     f.write(compile(program))
