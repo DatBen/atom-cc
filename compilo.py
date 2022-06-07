@@ -383,6 +383,22 @@ def compile(prg, opti=False):
         return code
 
 
+# print(compile_prg(grammaire.parse(program)))
+
+
+# program = """main(X,Y){
+
+#     U=4+3;
+#     printf(Y-X);
+#     printf(3+8);
+#     return(U+X);
+#     }"""
+
+
+# print(pp_prg(grammaire.parse(program)))
+# print("\n")
+
+
 program = grammaire.parse("".join(open(args.file).readlines()))
 program = pp_prg(program, False)
 with open("prog.pac", "w") as f:
