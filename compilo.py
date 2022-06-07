@@ -383,30 +383,14 @@ def compile(prg, opti=False):
         return code
 
 
-program = """main(X){
-    A=6;
-    C=1+4;
-    printf(C);
-    if((C*(1+4))==25){
-        printf(3);
-    }
-    return(X);
-   
-    }"""
+program = grammaire.parse("".join(open(args.file).readlines()))
+program = pp_prg(program, False)
+with open("prog.pac", "w") as f:
+    f.write(program)
+program = grammaire.parse(program)
 
-compile(grammaire.parse(program))
-print(pp_prg(grammaire.parse(program), True))
+with open("prog.asm", "w") as f:
+    f.write(compile(program, True))
 
 
-## VERSION .sh
-# program = grammaire.parse("".join(open(args.file).readlines()))
-# program = pp_prg(program, False)
-# with open("prog.pac", "w") as f:
-#     f.write(program)
-# program = grammaire.parse(program)
-
-# with open("prog.asm", "w") as f:
-#     f.write(compile(program, True))
-
-
-# print(pp_prg(program))
+print(pp_prg(program))
