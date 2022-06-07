@@ -327,16 +327,6 @@ def compile_cmd(cmd, values, opti):
     if cmd.data == "printf":
         return f"{compile_expr(cmd.children[0],values,opti)}\nmov rdi,fmt\nmov rsi,rax\nxor rax,rax\ncall printf"
 
-    # e = pp_expr(cmd.children[0], values, opti)
-    # if e == "0":
-    #     return ""
-    # elif str.isdigit(e) and int(e) != 0:
-
-    #     b = pp_bloc(cmd.children[1], values, opti)
-    #     return f"{b}"
-    # else:
-    #     b = pp_bloc(cmd.children[1], values, opti)
-    #     return f"{cmd.data}({e}){{\n {b} }}"
     if cmd.data == "if":
 
         e = compile_expr(cmd.children[0], values, opti)
