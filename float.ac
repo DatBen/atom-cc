@@ -4,6 +4,9 @@ main(a)
     y=50.0f;
     x=x*y;
     printf(x);
+    z=0.0f;
+    z=x;
+    printf(z);
     a=1;
     b=2;
     printf(a+b);

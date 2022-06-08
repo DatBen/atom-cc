@@ -4,6 +4,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Compile a program")
 parser.add_argument("--file", help="the file to compile")
+parser.add_argument("--moule", help="moule")
 args = parser.parse_args()
 
 
@@ -369,7 +370,7 @@ def compile(prg, opti=False):
         prg, dict_assignement, dict.fromkeys(vars_list, None)
     )
 
-    with open("moule.asm") as f:
+    with open(args.moule) as f:
         code = f.read()
         vars_decl = "\n".join([f"{x}: dq 0" for x in var_list(prg)])
         code = code.replace("VAR_DECL", vars_decl)
@@ -405,7 +406,7 @@ with open("prog.pac", "w") as f:
     f.write(program)
 program = grammaire.parse(program)
 
-with open("prog.asm", "w") as f:
+with open("build/prog.asm", "w") as f:
     f.write(compile(program, True))
 
 
