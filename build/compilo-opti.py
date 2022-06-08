@@ -374,6 +374,8 @@ def compile(prg, opti=False):
         code = f.read()
         vars_decl = "\n".join([f"{x}: dq 0" for x in var_list(prg)])
         code = code.replace("VAR_DECL", vars_decl)
+        code = code.replace("FLOAT_DECL", "")
+
         code = code.replace(
             "RETURN", compile_expr(prg.children[2], dict_values, opti)
         )
