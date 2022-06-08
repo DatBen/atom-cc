@@ -55,7 +55,7 @@ showarr(array)
 
 ## Optimisation
 
-The compilator has a optimisation option which improve the execution time of the generated binary after compilation.
+The compiler has a optimisation option which improve the execution time of the generated binary after compilation.
 
 First, immediate calculations are done during the compilation. Which means that expression such has (1+3)\*(4-2) are replace by there value (8 in this example) in the assembly code.
 
@@ -94,7 +94,7 @@ is replace by :
 A = A+1
 ```
 
-**All this optimisation principles work together.**
+**All this optimisation principles work together. The pretty printer and the compiler do these optimisations (exept for the dead code recognition). Which means that a code do not need to be pre-processed by the pretty printer to be optimized by the compilator.**
 
 To run an example which show all this principles and print the code optimized you can run :
 
