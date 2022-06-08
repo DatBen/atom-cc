@@ -204,6 +204,8 @@ floats = []
 def compile_cmd(cmd):
     global nb_while
     global nb_if
+    print(cmd)
+
     if cmd.data == "assignement":
 
         lhs = cmd.children[0].value
@@ -241,6 +243,7 @@ def compile_cmd(cmd):
         lhs = cmd.children[0].value
         e = compile_expr(cmd.children[1])
         rhs = compile_expr(cmd.children[2])
+        print(cmd)
         if "xmm0" in rhs:
             if lhs not in floats:
                 floats.append(lhs)
@@ -268,7 +271,9 @@ def compile_prg(prog):
 def compile_vars(ast):
     s = ""
     for i in range(len(ast.children)):
-        s += f"\nmov rbx, [rbp-0x10]\nmov rdi,[rbx-{8*(i)}]\ncall atoi\nmov [{ast.children[i].value}],rax"
+        s += f"\nmov rbx, [rbp-0x10]\nmov rdi, [rbx+{8*(i+1)}]\ncall atoi\n\
+mov [{ast.children[i].value}], rax\n"
+
     return s
 
 
@@ -303,8 +308,9 @@ for f in float_list(program):
     i += 1
 
 
-
+print(floats)
 print(pp_prg(program))
+print("no optimisation")
 print("\n")
 with open("build/prog.asm", "w") as f:
     f.write(compile(program))

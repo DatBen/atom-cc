@@ -405,6 +405,8 @@ program = pp_prg(program, False)
 with open("prog.pac", "w") as f:
     f.write(program)
 program = grammaire.parse(program)
+print("with optimisation")
+
 
 with open("build/prog.asm", "w") as f:
     f.write(compile(program, True))
