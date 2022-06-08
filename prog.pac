@@ -1,16 +1,16 @@
 main (a) {
- u = 1;
- a = new int[u + 25 + 25];
- i = 0;
- while(i != len(a)){
- a[i] = i;
- i = i + 1; }
- ashowarr=0;
-while(ashowarr!=len(a)){
-printf(a[ashowarr]);
-ashowarr=ashowarr+1;
-}
-
- printf(a[2]); 
- return(len(a));
+ x = 10.0f;
+ y = 50.0f;
+ x = (x * y);
+ printf(x);
+ z = 0.0f;
+ z = x;
+ printf(z);
+ a = 1;
+ b = 2;
+ printf((a + b));
+ c = ((float) a);
+ c = (c + y);
+ printf(c); 
+ return(x);
 }
