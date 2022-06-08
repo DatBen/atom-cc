@@ -404,7 +404,7 @@ def compile(prg, opti=False):
 
 
 program = grammaire.parse("".join(open(args.file).readlines()))
-program = pp_prg(program, False)
+program = pp_prg(program, True)
 with open("prog.pac", "w") as f:
     f.write(program)
 program = grammaire.parse(program)

@@ -4,6 +4,8 @@ main(a)
     y=50.0f;
     x=x*y;
     printf(x);
+    x=x-y;
+    printf(x);
     z=0.0f;
     z=x;
     printf(z);
@@ -13,5 +15,12 @@ main(a)
     c=(float) a;
     c=c+y;
     printf(c);
+
+
+    u=new int[5];
+    u[0]=1;
+    u[4]=8;
+    showarr(u);
+
     return(x);
 }
