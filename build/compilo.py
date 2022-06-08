@@ -189,6 +189,10 @@ def compile_expr(expr):
         e = compile_expr(expr.children[0])
         res = f"{e}\npush rax\npop rbx\nimul rbx,8\nadd rbx,8\nmov rdi, rbx\ncall malloc\npush rax\n{e}\npop rbx\npush rax\nmov rax,rbx\npop rbx\nmov [rax], rbx\n"
         return res
+    if expr.data == "new_array_float":
+        e = compile_expr(expr.children[0])
+        res = f"{e}\npush rax\npop rbx\nimul rbx,8\nadd rbx,8\nmov rdi, rbx\ncall malloc\npush rax\n{e}\npop rbx\npush rax\nmov rax,rbx\npop rbx\nmov [rax], rbx\n"
+        return res
     if expr.data == "len_array":
         e = expr.children[0].value
         return f"\nmov rax,  [{e}]\nmov rax,[rax]"
