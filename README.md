@@ -1,6 +1,16 @@
 # atom-cc
 
+Float doesn't work with optimisation !
+
 ### /!\ Be careful, parentheses are very important, a code like 1 + 4 == 5 can have both behavior, 5 == 5 or 1 + (4==5) -> 1 because == equals to have 0 if False, everything else if True
+
+##How to compile main.ac ?
+
+No optimisation :
+./atom-cc.sh float.ac -> ./main
+
+With optimation :
+./atom-cc.sh float.ac -01 -> ./main
 
 ## Array
 
@@ -77,3 +87,43 @@ A = A+1
 ```
 
 **All this optimisation principles work together.**
+<<<<<<< HEAD
+=======
+
+## Float
+
+Define a float :
+
+```
+x=2.5f
+```
+
+If you want copy a float in another variable, set this variable to a float first :
+
+```
+z=0.0f
+z=x
+```
+
+Once the variable has been seen as a float, it can't be assigned to an int
+
+Operation with float :
+
+```
+z=0.0f
+x=1.0f
+y=2.0f
+z=x+y
+z=x/y
+z=x-y
+z=x*y
+```
+
+You can cast an int to a float :
+
+```
+x=1
+z=(float) x
+```
+
+> > > > > > > ben

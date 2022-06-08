@@ -4,3 +4,8 @@
 *.out
 main*
 *.pac
+/build/prog.o
+/build/prog.asm
+
+./main
+prog.pac
