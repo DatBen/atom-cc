@@ -1,3 +1,9 @@
+*.asm
+!moule.asm
+*.o
+*.out
+main*
+*.pac
 /build/prog.o
 /build/prog.asm
 
