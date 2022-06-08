@@ -1,6 +1,6 @@
 # atom-cc
 
-Float doesn't work with optimisation !
+### Float doesn't work with optimisation !
 
 ### /!\ Be careful, parentheses are very important, a code like 1 + 4 == 5 can have both behavior, 5 == 5 or 1 + (4==5) -> 1 because == equals to have 0 if False, everything else if True
 
@@ -59,7 +59,7 @@ The compilator has a optimisation option which improve the execution time of the
 
 First, immediate calculations are done during the compilation. Which means that expression such has (1+3)\*(4-2) are replace by their value (8 in this example) in the assembly code.
 
-Then, variables that are assigned only once by a constant value are not stored as a variable and are replace by there value everywhere in the assembly code.
+Then, variables that are assigned only once by a constant value are not stored as a variable and are also replace by their value everywhere in the assembly code.
 For instance a code like this :
 
 ```
