@@ -76,7 +76,7 @@ printf(22)
 
 This way we gain in memory usage and in execution time.
 
-Finaly, the optimised pretty printer can recognize dead code. Dead code from if blocs are deleted and if blocs always true are replace by a simple bloc.
+Finaly, the optimised pretty printer can recognize dead code. Dead code from "if" blocs are deleted and "if" blocs always true are replaced by a simple bloc.
 For instance, this code :
 
 ```
