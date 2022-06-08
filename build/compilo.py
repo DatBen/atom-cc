@@ -185,7 +185,7 @@ def compile_expr(expr):
     if expr.data == "float":
         e = expr.children[0].value
         return f"\nmovsd xmm0,[{float_dict[e]}]"
-    if expr.data == "new_array" or expr.data=="new_array_float":
+    if expr.data == "new_array" or expr.data == "new_array_float":
         e = compile_expr(expr.children[0])
         res = f"{e}\npush rax\npop rbx\nimul rbx,8\nadd rbx,8\nmov rdi, rbx\ncall malloc\npush rax\n{e}\npop rbx\npush rax\nmov rax,rbx\npop rbx\nmov [rax], rbx\n"
         return res
@@ -218,7 +218,7 @@ def compile_cmd(cmd):
             return f"{rhs}\nmovsd [{lhs}],xmm0"
         else:
             return f"{rhs}\nmov [{lhs}],rax"
-            
+
     if cmd.data == "printf":
         rhs = compile_expr(cmd.children[0])
         if (cmd.children[0].data == "variable") and cmd.children[0].children[0].value in floats:
@@ -251,8 +251,6 @@ def compile_cmd(cmd):
             return f"{e}\npush rax\nmov rax, [{lhs}]\npop rbx\nimul rbx,8\nadd rbx,8\nadd rax,rbx\npush rax\n{rhs}\npop rbx\nmovsd [{lhs}],xmm0"
         else:
             return f"{e}\npush rax\nmov rax, [{lhs}]\npop rbx\nimul rbx,8\nadd rbx,8\nadd rax,rbx\npush rax\n{rhs}\npop rbx\nmov [rbx],rax"
-
-        
 
 
 def compile_bloc(bloc):
@@ -296,10 +294,12 @@ def compile(prg):
 program = "".join(open(args.file).readlines())
 program = grammaire.parse(program)
 program = pp_prg(program)
+with open("prog.pac", "w") as f:
+    f.write(program)
 program = grammaire.parse(program)
 
 
-tab_float=[]
+tab_float = []
 float_dict = {}
 i = 0
 for f in float_list(program):
@@ -307,9 +307,7 @@ for f in float_list(program):
     i += 1
 
 
-
 print(pp_prg(program))
 print("\n")
 with open("build/prog.asm", "w") as f:
     f.write(compile(program))
-
