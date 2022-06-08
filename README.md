@@ -57,7 +57,7 @@ showarr(array)
 
 The compilator has a optimisation option which improve the execution time of the generated binary after compilation.
 
-First, immediate calculations are done during the compilation. Which means that expression such has (1+3)\*(4-2) are replace by there value (8 in this example) in the assembly code.
+First, immediate calculations are done during the compilation. Which means that expression such has (1+3)\*(4-2) are replace by their value (8 in this example) in the assembly code.
 
 Then, variables that are assigned only once by a constant value are not stored as a variable and are replace by there value everywhere in the assembly code.
 For instance a code like this :
