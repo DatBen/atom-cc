@@ -13,7 +13,7 @@ No optimisation :
 ./main --args
 ```
 
-With optimation :
+With optimisation :
 
 ```
 ./atom-cc.sh main.ac -01
@@ -47,10 +47,26 @@ len_array=len(array)
 ```
 
 Print array:
-/!\ This function forbid the use of var named $array_nameshowarr
+/!\ This function forbid the use of var named $(array_name)showarr
 
 ```
 showarr(array)
+```
+Exemple de code :
+```
+main(a)
+{   u=1;
+    a=new int[u+25+25];
+    i=0;
+    while(i!=len(a)){
+        a[i]=i;
+        i=i+1;
+
+    }
+    showarr(a);
+    return (len(a));
+}
+
 ```
 
 ## Optimisation
