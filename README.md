@@ -75,7 +75,7 @@ main(a)
 
 ## Optimisation
 
-The compiler has a optimisation option which improve the execution time of the generated binary after compilation.
+The compiler has an optimisation option which improve the execution time of the generated binary after compilation.
 
 First, immediate calculations are done during the compilation. Which means that expression such has (1+3)\*(4-2) are replace by their value (8 in this example) in the assembly code.
 
