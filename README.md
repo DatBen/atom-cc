@@ -11,14 +11,14 @@
 No optimisation :
 
 ```
-./atom-cc.sh main.ac
+./atom-cc.sh name_of_my_code_file.ac
 ./main --args
 ```
 
 With optimisation :
 
 ```
-./atom-cc.sh main.ac -01
+./atom-cc.sh name_of_my_code_file.ac -01
 ./main --args
 ```
 
