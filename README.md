@@ -1,8 +1,10 @@
 # atom-cc
 
-### Float doesn't work with optimisation !
+- **/!\ The main branch of this repository is the branch named "Ben" not "Main"**
 
-### /!\ Be careful, parentheses are very important, a code like 1 + 4 == 5 can have both behavior, 5 == 5 or 1 + (4==5) -> 1 because == equals to have 0 if False, everything else if True
+- **/!\ Float implementation doesn't work with optimisation !**
+
+- **/!\ Be careful, parentheses are very important, a code like 1 + 4 == 5 can have both behavior, 5 == 5 or 1 + (4==5) -> 1 because == equals to have 0 if False, everything else if True**
 
 ## How to compile main.ac ?
 
@@ -52,7 +54,9 @@ Print array:
 ```
 showarr(array)
 ```
+
 Exemple de code :
+
 ```
 main(a)
 {   u=1;
